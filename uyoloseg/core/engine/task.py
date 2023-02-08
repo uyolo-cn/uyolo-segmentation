@@ -23,10 +23,14 @@
 # THIS SOFTWARE IS PROVIDED BY UYOLO, GROUP AND CONTRIBUTORS
 # ===================================================================
 
+from typing import Any, Dict, List
+
 import torch
 import torch.distributed as dist
 from pytorch_lightning import LightningModule
 from pytorch_lightning.utilities import rank_zero_only
+
+from uyoloseg.models import build_model
 
 class TrainingTask(LightningModule):
     """
@@ -38,4 +42,22 @@ class TrainingTask(LightningModule):
     """
 
     def __init__(self, cfg, evaluator=None) -> None:
-        super(TrainingTask, self).__init__()
+        super().__init__()
+        self.cfg = cfg
+        self.model = build_model(cfg.model)
+    
+    def forward(self, x):
+        x = self.model(x)
+        return x
+
+    def training_step(self, batch, batch_idx):
+        pass
+
+    def training_epoch_end(self, outputs: List[Any]) -> None:
+        pass
+
+    def validation_step(self, batch, batch_idx):
+        pass
+
+    def validation_epoch_end(self, validation_step_outputs) -> None:
+        pass

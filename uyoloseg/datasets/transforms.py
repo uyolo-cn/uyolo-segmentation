@@ -22,6 +22,7 @@
 #
 # THIS SOFTWARE IS PROVIDED BY UYOLO, GROUP AND CONTRIBUTORS
 # ===================================================================
+import torch
 from torch import Tensor
 import torchvision.transforms as transforms
 import torchvision.transforms.functional as trans
@@ -144,36 +145,23 @@ class CenterCrop:
         Args:
             output_size: height and width of the crop box. If int, this size is used for both directions.
         """
-        self.size = (size, size) if isinstance(size, int) else size
+        self.cc = transforms.CenterCrop(size)
 
     def __call__(self, img: Tensor, mask: Tensor) -> Tuple[Tensor, Tensor]:
-        return trans.center_crop(img, self.size), trans.center_crop(mask, self.size)
+        return self.cc(img), self.cc(mask)
 
 
 class RandomCrop:
-    def __init__(self, size: Union[int, List[int], Tuple[int]], p: float = 0.5) -> None:
+    def __init__(self, size: Union[int, List[int], Tuple[int]], seg_fill: int = 0) -> None:
         """Randomly Crops the image.
         Args:
             output_size: height and width of the crop box. If int, this size is used for both directions.
         """
-        self.size = (size, size) if isinstance(size, int) else size
-        self.p = p
+        self.img_rc = transforms.RandomCrop(size, padding=None, pad_if_needed=True, padding_mode='edge')
+        self.mask_rc = transforms.RandomCrop(size, padding=None, pad_if_needed=True, fill=seg_fill)
 
     def __call__(self, img: Tensor, mask: Tensor) -> Tuple[Tensor, Tensor]:
-        H, W = img.shape[1:]
-        tH, tW = self.size
-
-        if random.random() < self.p:
-            margin_h = max(H - tH, 0)
-            margin_w = max(W - tW, 0)
-            y1 = random.randint(0, margin_h+1)
-            x1 = random.randint(0, margin_w+1)
-            y2 = y1 + tH
-            x2 = x1 + tW
-            img = img[:, y1:y2, x1:x2]
-            mask = mask[:, y1:y2, x1:x2]
-        return img, mask
-
+        return self.img_rc(img), self.mask_rc(mask)
 
 class Pad:
     def __init__(self, size: Union[List[int], Tuple[int], int], seg_fill: int = 0) -> None:
@@ -213,3 +201,49 @@ class ResizePad:
         mask = trans.resize(mask, (nH, nW), trans.InterpolationMode.NEAREST)
 
         return Pad(self.size, self.seg_fill)(img, mask)
+
+class Resize:
+    def __init__(self, size: Union[int, Tuple[int], List[int]]) -> None:
+        self.img_resize = transforms.Resize(size, transforms.InterpolationMode.BILINEAR)
+        self.mask_resize = transforms.Resize(size, transforms.InterpolationMode.NEAREST)
+    
+    def __call__(self, img: Tensor, mask: Tensor) -> Tuple[Tensor, Tensor]:
+        return self.img_resize(img), self.mask_resize(mask)
+
+class RandomResizedCrop:
+    def __init__(self, size: Union[int, Tuple[int], List[int]]) -> None:
+        self.img_op = transforms.RandomResizedCrop(size, interpolation=transforms.InterpolationMode.BILINEAR)
+        self.mask_op = transforms.RandomResizedCrop(size, interpolation=transforms.InterpolationMode.NEAREST)
+
+    def __call__(self, img: Tensor, mask: Tensor) -> Tuple[Tensor, Tensor]:
+        return self.img_op(img), self.mask_op(mask)
+
+class Compose:
+    def __init__(self, transforms: list) -> None:
+        self.transforms = transforms
+
+    def __call__(self, img: Tensor, mask: Tensor) -> Tuple[Tensor, Tensor]:
+        if mask.ndim == 2:
+            assert img.shape[1:] == mask.shape
+        else:
+            assert img.shape[1:] == mask.shape[1:]
+
+        for transform in self.transforms:
+            img, mask = transform(img, mask)
+
+        return img, mask
+
+if __name__ == '__main__':
+    h = 230
+    w = 420
+    img = torch.randn(3, h, w)
+    mask = torch.randn(1, h, w)
+    aug = Compose([
+        # RandomResizedCrop((512, 512)),
+        # RandomCrop((512, 512), 125),
+        # Pad((512, 512)),
+        # Resize((512, 512)),
+        Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+    ])
+    img, mask = aug(img, mask)
+    print(img.shape, mask.shape)
