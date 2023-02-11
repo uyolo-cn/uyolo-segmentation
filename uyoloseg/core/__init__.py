@@ -25,4 +25,3 @@
 from .engine import * # noqa: F401, F403
 from .evaluator import * # noqa: F401, F403
 from .optimizers import * # noqa: F401, F403
-from .schedulers import * # noqa: F401, F403

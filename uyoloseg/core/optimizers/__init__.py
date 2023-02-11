@@ -22,3 +22,59 @@
 #
 # THIS SOFTWARE IS PROVIDED BY UYOLO, GROUP AND CONTRIBUTORS
 # ===================================================================
+
+import copy
+import logging
+
+import torch
+
+from torch.nn import GroupNorm, LayerNorm
+from torch.nn.modules.batchnorm import _BatchNorm
+
+NORMS = (GroupNorm, LayerNorm, _BatchNorm)
+
+def get_optimizer(model, config):
+    config = copy.deepcopy(config)
+    param_dict = {}
+
+    name = config.pop("name")
+
+    base_lr = config.get("lr", None)
+    base_wd = config.get("weight_decay", None)
+
+    no_norm_decay = config.pop("no_norm_decay", False)
+    no_bias_decay = config.pop("no_bias_decay", False)
+    param_level_cfg = config.pop("param_level_cfg", {})
+
+
+    for name, p in model.named_parameters():
+        if not p.requires_grad:
+            continue
+
+        for key in param_level_cfg:
+            if key in name:
+                if "lr_mult" in param_level_cfg[key] and base_lr:
+                    param_dict[p].update(
+                        {"lr": base_lr * param_level_cfg[key]["lr_mult"]}
+                    )
+                if "decay_mult" in param_level_cfg[key] and base_wd:
+                    param_dict[p].update(
+                        {"weight_decay": base_wd * param_level_cfg[key]["decay_mult"]}
+                    )
+                break
+    if no_norm_decay:
+        # update norms decay
+        for name, m in model.named_modules():
+            if isinstance(m, NORMS):
+                param_dict[m.bias].update({"weight_decay": 0})
+                param_dict[m.weight].update({"weight_decay": 0})
+    if no_bias_decay:
+        # update bias decay
+        for name, m in model.named_modules():
+            if hasattr(m, "bias"):
+                param_dict[m.bias].update({"weight_decay": 0})
+
+    # convert param dict to optimizer's param groups
+    param_groups = []
+    for p, pconfig in param_dict.items():
+        param_groups += [{"params": p, **pconfig}]
