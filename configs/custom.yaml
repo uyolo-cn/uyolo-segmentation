@@ -1,0 +1,3 @@
+model
+  network
+    name: DDRNet23_slim

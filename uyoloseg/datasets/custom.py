@@ -72,5 +72,7 @@ class CustomDataset(Dataset):
         if self.LABEL_MAP:
             label = label.squeeze().numpy()
             label = torch.from_numpy(self.LABEL_MAP[label]).long()
+
+        meta = {'img': image, 'mask': label}
         
-        return image, label
+        return meta

@@ -23,4 +23,43 @@
 # THIS SOFTWARE IS PROVIDED BY UYOLO, GROUP AND CONTRIBUTORS
 # ===================================================================
 
-#TODO
+from yacs import CfgNode
+
+cfg = CfgNode(new_allowed=True)
+
+cfg.save_dir = "./"
+
+# Model
+cfg.model = CfgNode(new_allowed=True)
+
+cfg.model.network = CfgNode(new_allowed=True)
+
+cfg.model.network.backbone = CfgNode(new_allowed=True)
+cfg.model.network.fpn = CfgNode(new_allowed=True)
+cfg.model.network.head = CfgNode(new_allowed=True)
+
+# Dataset
+cfg.data = CfgNode(new_allowed=True)
+
+cfg.data.train = CfgNode(new_allowed=True)
+cfg.data.val = CfgNode(new_allowed=True)
+
+cfg.device = CfgNode(new_allowed=True)
+cfg.device.precision = 32
+
+# Train Settings
+
+cfg.schedule = CfgNode(new_allowed=True)
+
+# logger
+cfg.log = CfgNode()
+cfg.log.interval = 50
+
+def update_config(cfg, args):
+    cfg.defrost()
+    
+    cfg.merge_from_file(args.cfg)
+    cfg.merge_from_list(args.opts)
+
+    cfg.freeze()
+
