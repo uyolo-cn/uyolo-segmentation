@@ -1,3 +1,9 @@
-model
-  network
-    name: DDRNet23_slim
+# Model
+model:
+  network:
+    name: DDRNet_23_slim
+
+# Data
+
+
+# Schedule
