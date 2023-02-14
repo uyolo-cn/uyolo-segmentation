@@ -27,9 +27,7 @@ from torch import Tensor
 from torch.utils.data import Dataset
 from torchvision import io
 from typing import Tuple
-from utils import file2list
-
-
+from .utils import file2list
 
 class CustomDataset(Dataset):
     """Custom dataset for semantic segmentation. With a txt file to load image data and mask data.
@@ -50,14 +48,17 @@ class CustomDataset(Dataset):
     PALETTE = None
     LABEL_MAP = None
 
-    def __init__(self, txt_path='./train.txt', num_classes=2, img_suffixes=['.jpg'], mask_suffixes=['.png'], task='train', ignore_index=255, transform=None) -> None:
+    def __init__(self, txt_path='./train.txt', num_classes=2, img_suffixes=['.jpg'], mask_suffixes=['.png'], task='train', ignore_index=255, transform=None, logger=None) -> None:
         super(CustomDataset, self).__init__()
         self.num_classes = num_classes
         self.transform = transform
         self.task = task
         self.ignore_index = ignore_index
         self.files = file2list(txt_path)
-        print(f"Found {len(self.files)} {task} images.")
+        if logger:
+            logger.info(f"Found {len(self.files)} {task} images.")
+        else:
+            print(f"Found {len(self.files)} {task} images.")
 
     def __len__(self) -> int:
         return len(self.files)

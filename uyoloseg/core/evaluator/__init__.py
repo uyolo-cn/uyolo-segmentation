@@ -25,7 +25,7 @@
 
 import copy
 
-from segment import SegmentEvaluator
+from .segment import SegmentEvaluator
 
 def build_evaluator(cfg, **kargs):
     eval_cfg = copy.deepcopy(cfg)

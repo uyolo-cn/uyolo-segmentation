@@ -23,9 +23,12 @@
 # THIS SOFTWARE IS PROVIDED BY UYOLO, GROUP AND CONTRIBUTORS
 # ===================================================================
 
-from yacs import CfgNode
+from yacs.config import CfgNode
 
 cfg = CfgNode(new_allowed=True)
+
+cfg.device = CfgNode(new_allowed=True)
+cfg.device.precision = 32
 
 cfg.save_dir = "./"
 
@@ -39,17 +42,15 @@ cfg.model.network.fpn = CfgNode(new_allowed=True)
 cfg.model.network.head = CfgNode(new_allowed=True)
 
 # Dataset
-cfg.data = CfgNode(new_allowed=True)
+cfg.train_dataset = CfgNode(new_allowed=True)
 
-cfg.data.train = CfgNode(new_allowed=True)
-cfg.data.val = CfgNode(new_allowed=True)
-
-cfg.device = CfgNode(new_allowed=True)
-cfg.device.precision = 32
+cfg.val_dataset = CfgNode(new_allowed=True)
 
 # Train Settings
 
 cfg.schedule = CfgNode(new_allowed=True)
+
+cfg.evaluator = CfgNode(new_allowed=True)
 
 # logger
 cfg.log = CfgNode()

@@ -23,6 +23,6 @@
 # THIS SOFTWARE IS PROVIDED BY UYOLO, GROUP AND CONTRIBUTORS
 # ===================================================================
 
-from config import cfg, update_config
-from logger import UYOLOLightningLogger
-from setup_env import set_multi_processing
+from .config import cfg, update_config
+from .logger import UYOLOLightningLogger
+from .setup_env import set_multi_processing

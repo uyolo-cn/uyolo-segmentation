@@ -26,17 +26,17 @@
 import copy
 import warnings
 
-from custom import CustomDataset
-from transforms import *
-from collate import *
+from .custom import CustomDataset
+from .transforms import *
+from .collate import *
 
-def build_dataset(cfg, mode):
+def build_dataset(cfg, mode, logger):
     dataset_cfg = copy.deepcopy(cfg)
     name = dataset_cfg.pop("name")
     trans = dataset_cfg.pop("transforms")
     ops = build_transforms(trans)
     if name == 'CustomDataset':
-        return CustomDataset(task=mode, transform=ops, **dataset_cfg)
+        return CustomDataset(task=mode, transform=ops, logger=logger, **dataset_cfg)
     else:
         raise NotImplementedError("Unknown dataset type!")
 

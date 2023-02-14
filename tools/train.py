@@ -37,7 +37,7 @@ from uyoloseg.core import build_evaluator, TrainingTask
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("config", help="train config file path")
+    parser.add_argument("--cfg", default='configs/custom.yaml', type=str, help="train config file path")
     parser.add_argument(
         "--local_rank", default=-1, type=int, help="node rank for distributed training"
     )
@@ -53,8 +53,6 @@ def parse_args():
 def main():
     args = parse_args()
 
-    import pdb; pdb.set_trace()
-
     local_rank = int(args.local_rank)
     torch.backends.cudnn.enabled = True
     torch.backends.cudnn.benchmark = True
@@ -64,14 +62,13 @@ def main():
     logger.dump_cfg(cfg)
 
     if args.seed is not None:
-        logger.info("Set random seed to {}".format(args.seed))
         pl.seed_everything(args.seed)
 
     logger.info("Setting up data...")
-    train_dataset = build_dataset(cfg.data.train_dataset, "train")
-    val_dataset = build_dataset(cfg.data.val_dataset, "val")
+    train_dataset = build_dataset(cfg.train_dataset, "train", logger)
+    val_dataset = build_dataset(cfg.val_dataset, "val", logger)
 
-    evaluator = build_evaluator(cfg.evaluator, num_classes=val_dataset.num_classes, device=device)
+    evaluator = build_evaluator(cfg.evaluator, dataset=val_dataset, device=device)
 
     train_dataloader = torch.utils.data.DataLoader(
         train_dataset,
@@ -112,7 +109,7 @@ def main():
     else:
         accelerator, devices, strategy, precision = (
             "gpu",
-            cfg.device.gpu_ids,
+            cfg.device.gpus,
             None,
             cfg.device.precision,
         )
@@ -136,6 +133,8 @@ def main():
         strategy=strategy,
         precision=precision,
     )
+
+    import pdb; pdb.set_trace()
 
     trainer.fit(task, train_dataloader, val_dataloader, ckpt_path=model_resume_path)
 

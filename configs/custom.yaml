@@ -1,3 +1,4 @@
+# Device
 device:
   gpus: (0,)
   workers_per_gpu: 8
@@ -14,7 +15,7 @@ model:
 # Data
 train_dataset:
   name: CustomDataset
-  txt_path: './train.txt'
+  txt_path: '/project/datasets/expressage/train.txt'
   num_classes: 2
   img_suffixes: ['.jpg']
   mask_suffixes: ['.png']
@@ -30,7 +31,7 @@ train_dataset:
 
 val_dataset:
   name: CustomDataset
-  txt_path: './val.txt'
+  txt_path: '/project/datasets/expressage/val.txt'
   num_classes: 2
   img_suffixes: ['.jpg']
   mask_suffixes: ['.png']

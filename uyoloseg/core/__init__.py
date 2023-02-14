@@ -22,6 +22,6 @@
 #
 # THIS SOFTWARE IS PROVIDED BY UYOLO, GROUP AND CONTRIBUTORS
 # ===================================================================
-from .engine import * # noqa: F401, F403
-from .evaluator import * # noqa: F401, F403
 from .optimizers import * # noqa: F401, F403
+from .evaluator import * # noqa: F401, F403
+from .engine import * # noqa: F401, F403

@@ -26,7 +26,7 @@ import logging
 import os
 import time
 
-from pytorch_lightning.utilities.cloud_io import get_filesystem
+from lightning_lite.utilities.cloud_io import get_filesystem
 from pytorch_lightning.loggers import Logger as LightningLoggerBase
 from pytorch_lightning.loggers.logger import rank_zero_experiment
 from pytorch_lightning.utilities import rank_zero_only

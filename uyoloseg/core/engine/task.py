@@ -32,7 +32,7 @@ from pytorch_lightning import LightningModule
 from pytorch_lightning.utilities import rank_zero_only
 
 from uyoloseg.models import build_model, build_weight_averager
-from uyoloseg.core import get_optimizer
+from uyoloseg.core import build_optimizer
 
 class TrainingTask(LightningModule):
     """
@@ -151,7 +151,7 @@ class TrainingTask(LightningModule):
             optimizer
         """
         optimizer_cfg = copy.deepcopy(self.cfg.schedule.optimizer)
-        optimizer = get_optimizer(self.model, optimizer_cfg)
+        optimizer = build_optimizer(self.model, optimizer_cfg)
 
         schedule_cfg = copy.deepcopy(self.cfg.schedule.lr_schedule)
         name = schedule_cfg.pop("name")
