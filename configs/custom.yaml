@@ -11,6 +11,8 @@ save_dir: './exp'
 model:
   network:
     name: DDRNet_23_slim
+  loss:
+    name: CrossEntropyLoss
 
 # Data
 train_dataset:
@@ -37,10 +39,8 @@ val_dataset:
   mask_suffixes: ['.png']
   ignore_index: 255
   transforms:
-    - op: RandomResizedCrop
+    - op: Resize
       size: [576, 1024]
-    - op: RandomAutocontrast
-    - op: RandomHorizontalFlip
     - op: Normalize
       mean: [0.485, 0.456, 0.406]
       std: [0.229, 0.224, 0.225]
