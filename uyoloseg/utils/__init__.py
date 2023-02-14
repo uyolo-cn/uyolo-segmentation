@@ -23,14 +23,6 @@
 # THIS SOFTWARE IS PROVIDED BY UYOLO, GROUP AND CONTRIBUTORS
 # ===================================================================
 
-import copy
-
-from segment import SegmentEvaluator
-
-def build_evaluator(cfg, **kargs):
-    eval_cfg = copy.deepcopy(cfg)
-    name = eval_cfg.pop("name")
-    if name == "SegmentEvaluator":
-        return SegmentEvaluator(**kargs)
-    else:
-        raise NotImplementedError
+from config import cfg, update_config
+from logger import UYOLOLightningLogger
+from setup_env import set_multi_processing

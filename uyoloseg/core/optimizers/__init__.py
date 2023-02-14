@@ -33,7 +33,7 @@ from torch.nn.modules.batchnorm import _BatchNorm
 
 NORMS = (GroupNorm, LayerNorm, _BatchNorm)
 
-def get_optimizer(model, config):
+def build_optimizer(model, config):
     config = copy.deepcopy(config)
     param_dict = {}
 

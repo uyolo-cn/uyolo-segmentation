@@ -43,15 +43,16 @@ class CustomDataset(Dataset):
         txt_path (str): Path to txt file
         img_suffixes (list[str]): Suffixes of images. Default: ['.jpg']
         mask_suffixes (list[str]): Suffixes of masks. Default: ['.png']
-        task (str): If task='val', gt wouldn't be loaded.
+        task (str): If task='test', gt wouldn't be loaded.
         ignore_index (int): The label index to be ignored. Default: 255
     """
     CLASSES = None
     PALETTE = None
     LABEL_MAP = None
 
-    def __init__(self, txt_path, img_suffixes=['.jpg'], mask_suffixes=['.png'], task='train', ignore_index=255, transform=None) -> None:
+    def __init__(self, txt_path='./train.txt', num_classes=2, img_suffixes=['.jpg'], mask_suffixes=['.png'], task='train', ignore_index=255, transform=None) -> None:
         super(CustomDataset, self).__init__()
+        self.num_classes = num_classes
         self.transform = transform
         self.task = task
         self.ignore_index = ignore_index

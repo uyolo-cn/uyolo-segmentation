@@ -61,7 +61,7 @@ class SegmentMetrics:
 
 
 class SegmentEvaluator:
-    def __init__(self, num_classes: int, ignore_label: int, device) -> None:
+    def __init__(self, num_classes: int, ignore_label: int, device=None) -> None:
         self.metric = SegmentMetrics(num_classes, ignore_label, device)
     
     def update(self, pred, target):
