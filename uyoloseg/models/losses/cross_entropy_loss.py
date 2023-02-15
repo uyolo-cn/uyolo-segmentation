@@ -27,21 +27,45 @@ from torch import nn, Tensor
 from torch.nn import functional as F
 
 class CrossEntropyLoss(nn.Module):
-    def __init__(self, ignore_label: int = 255, weight: Tensor = None, aux_weights: list = [1, 0.4, 0.4]) -> None:
+    def __init__(self, ignore_label: int = 255, weight: Tensor = None, top_k_percent_pixels: float = 1.0, label_smoothing: float = 0.0) -> None:
         super(CrossEntropyLoss, self).__init__()
-        self.aux_weights = aux_weights
-        self.criterion = nn.CrossEntropyLoss(weight=weight, ignore_index=ignore_label)
-
-    def _forward(self, preds: Tensor, labels: Tensor) -> Tensor:
-        # preds in shape [B, C, H, W] and labels in shape [B, H, W]
-        ph, pw = preds.shape[2:4]
-        lh, lw = labels.shape[1:3]
-        if ph != lh or pw != lw:
-            preds = F.interpolate(input=preds, size=(
-                lh, lw), mode='bilinear', align_corners=False)
-        return self.criterion(preds, labels)
-
-    def forward(self, preds: Tensor, labels: Tensor) -> Tensor:
-        if isinstance(preds, tuple):
-            return sum([w * self._forward(pred, labels) for (pred, w) in zip(preds, self.aux_weights)])
-        return self._forward(preds, labels)
+        self.weight = weight
+        self.ignore_label = ignore_label
+        self.label_smoothing = label_smoothing
+        self.top_k_percent_pixels = top_k_percent_pixels
+        self.EPS = 1e-8
+        
+    def forward(self, logit, label, semantic_weights=None):
+        loss = F.cross_entropy(logit, label, 
+                               weight=self.weight, 
+                               ignore_index=self.ignore_label, 
+                               reduction='none', 
+                               label_smoothing=self.label_smoothing)
+        return self.reduce_func(loss, logit, label, semantic_weights)
+    def reduce_func(self, loss, logit, label, semantic_weights):
+        mask = (label != self.ignore_index)
+        mask.required_grad = False
+        label.required_grad = False
+        
+        loss = loss * mask
+        
+        if semantic_weights is not None:
+            loss = loss * semantic_weights
+        
+        if self.weight is not None:
+            _one_hot = F.one_hot(label * mask, logit.shape[1])
+            coef = (_one_hot * self.weight).sum(axis=1)
+        else:
+            coef = torch.ones_like(label)
+        
+        if self.top_k_percent_pixels == 1.0:
+            avg_loss = loss.mean() / (self.EPS + (coef * mask).mean())
+        else:
+            loss = loss.reshape((-1, ))
+            top_k_pixels = int(self.top_k_percent_pixels * loss.numel())
+            loss, indices = torch.topk(loss, top_k_pixels)
+            coef = coef.reshape((-1, ))
+            coef = troch.gather(coef, indices)
+            coef.required_grad = False
+            avg_loss = loss.mean() / (coef.mean() + self.EPS)
+        return avg_loss
