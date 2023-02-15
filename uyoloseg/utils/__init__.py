@@ -24,5 +24,5 @@
 # ===================================================================
 
 from .config import cfg, update_config
-from .logger import UYOLOLightningLogger
+from .logger import UYOLOLightningLogger, set_same_logger
 from .setup_env import set_multi_processing

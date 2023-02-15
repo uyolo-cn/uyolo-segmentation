@@ -32,7 +32,7 @@ import torch
 from pytorch_lightning.callbacks import TQDMProgressBar
 
 from uyoloseg.datasets import build_dataset, naive_collate
-from uyoloseg.utils import cfg, update_config, UYOLOLightningLogger, set_multi_processing
+from uyoloseg.utils import cfg, update_config, UYOLOLightningLogger, set_multi_processing, set_same_logger
 from uyoloseg.core import build_evaluator, TrainingTask
 
 def parse_args():
@@ -59,6 +59,7 @@ def main():
     device = torch.device('cpu' if cfg.device.gpus == -1 else 'cuda')
 
     logger = UYOLOLightningLogger(cfg.save_dir)
+    set_same_logger(logger)
     logger.dump_cfg(cfg)
 
     if args.seed is not None:

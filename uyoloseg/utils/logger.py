@@ -26,6 +26,7 @@ import logging
 import os
 import time
 
+import lightning_lite
 from lightning_lite.utilities.cloud_io import get_filesystem
 from pytorch_lightning.loggers import Logger as LightningLoggerBase
 from pytorch_lightning.loggers.logger import rank_zero_experiment
@@ -141,3 +142,7 @@ class UYOLOLightningLogger(LightningLoggerBase):
         self.experiment.flush()
         self.experiment.close()
         self.save()
+
+def set_same_logger(logger):
+    lightning_lite.utilities.seed.log = logger
+    lightning_lite.utilities.rank_zero.rank_zero_module.log = logger
