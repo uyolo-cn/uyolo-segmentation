@@ -22,13 +22,3 @@
 #
 # THIS SOFTWARE IS PROVIDED BY UYOLO, GROUP AND CONTRIBUTORS
 # ===================================================================
-
-import copy
-
-from .hub import *
-
-def build_model(cfg):
-    pass
-
-def build_weight_averager(cfg):
-    pass

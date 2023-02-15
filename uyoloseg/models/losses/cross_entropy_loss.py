@@ -27,23 +27,31 @@ from torch import nn, Tensor
 from torch.nn import functional as F
 
 class CrossEntropyLoss(nn.Module):
+    '''
+    https://github.com/PaddlePaddle/PaddleSeg/blob/release/2.7/paddleseg/models/losses/cross_entropy_loss.py
+    '''
     def __init__(self, ignore_label: int = 255, weight: Tensor = None, top_k_percent_pixels: float = 1.0, label_smoothing: float = 0.0) -> None:
         super(CrossEntropyLoss, self).__init__()
         self.weight = weight
         self.ignore_label = ignore_label
         self.label_smoothing = label_smoothing
         self.top_k_percent_pixels = top_k_percent_pixels
-        self.EPS = 1e-8
+        self.eps = 1e-8
         
     def forward(self, logit, label, semantic_weights=None):
+
+        label = label.long()
+
         loss = F.cross_entropy(logit, label, 
                                weight=self.weight, 
                                ignore_index=self.ignore_label, 
                                reduction='none', 
                                label_smoothing=self.label_smoothing)
+        
         return self.reduce_func(loss, logit, label, semantic_weights)
+
     def reduce_func(self, loss, logit, label, semantic_weights):
-        mask = (label != self.ignore_index)
+        mask = (label != self.ignore_label)
         mask.required_grad = False
         label.required_grad = False
         
@@ -54,18 +62,39 @@ class CrossEntropyLoss(nn.Module):
         
         if self.weight is not None:
             _one_hot = F.one_hot(label * mask, logit.shape[1])
-            coef = (_one_hot * self.weight).sum(axis=1)
+            coef = (_one_hot * self.weight).sum(dim=-1)
         else:
             coef = torch.ones_like(label)
         
         if self.top_k_percent_pixels == 1.0:
-            avg_loss = loss.mean() / (self.EPS + (coef * mask).mean())
+            avg_loss = loss.mean() / (self.eps + (coef * mask).mean())
         else:
             loss = loss.reshape((-1, ))
             top_k_pixels = int(self.top_k_percent_pixels * loss.numel())
             loss, indices = torch.topk(loss, top_k_pixels)
             coef = coef.reshape((-1, ))
-            coef = troch.gather(coef, indices)
+            coef = torch.gather(coef, dim=0, index=indices)
             coef.required_grad = False
-            avg_loss = loss.mean() / (coef.mean() + self.EPS)
+            avg_loss = loss.mean() / (coef.mean() + self.eps)
         return avg_loss
+
+if __name__ == '__main__':
+    torch.manual_seed(304)
+
+    input = torch.randn(8, 5, 10, 10, requires_grad=True)
+
+    print(input.dtype)
+
+    target = torch.empty(8, 10, 10, dtype=torch.long).random_(5)
+
+    print(target.dtype)
+
+    loss = CrossEntropyLoss(weight=torch.randn(5), top_k_percent_pixels=0.9)
+
+    out = loss(input, target)
+
+    print(out, out.dtype)
+
+    # >>> torch.float32
+    # >>> torch.int64
+    # >>> tensor(1.1084, grad_fn=<DivBackward0>) torch.float32
