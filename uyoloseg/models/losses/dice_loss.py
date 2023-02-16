@@ -22,6 +22,7 @@
 #
 # THIS SOFTWARE IS PROVIDED BY UYOLO, GROUP AND CONTRIBUTORS
 # ===================================================================
+
 import torch
 from torch import nn, Tensor
 from torch.nn import functional as F
@@ -29,6 +30,14 @@ from torch.nn import functional as F
 class DiceLoss(nn.Module):
     '''
     https://github.com/PaddlePaddle/PaddleSeg/blob/release/2.7/paddleseg/models/losses/dice_loss.py
+    
+    The implements of the dice loss.
+    Args:
+        weight (list[float], optional): The weight for each class. Default: None.
+        ignore_index (int64): ignore_index (int64, optional): Specifies a target value that
+            is ignored and does not contribute to the input gradient. Default ``255``.
+        smooth (float32): Laplace smoothing to smooth dice loss and accelerate convergence.
+            Default: 1.0
     '''
     def __init__(self, weight: Tensor = None, ignore_index: int = 255, smooth: float = 1.0) -> None:
         super().__init__()
@@ -44,7 +53,7 @@ class DiceLoss(nn.Module):
 
         label[label == self.ignore_index] = 0
 
-        labels_one_hot: Tensor = F.one_hot(label, num_classes).permute((0, 3, 1, 2)) * mask
+        labels_one_hot: Tensor = F.one_hot(label, num_classes).permute((0, 3, 1, 2)).contiguous() * mask
 
         logit = F.softmax(logit, dim=1) * mask
 

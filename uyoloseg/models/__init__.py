@@ -26,6 +26,7 @@
 import copy
 
 from .hub import *
+from .losses import *
 
 def build_model(cfg):
     pass

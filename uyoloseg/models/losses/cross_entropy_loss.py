@@ -29,9 +29,21 @@ from torch.nn import functional as F
 class CrossEntropyLoss(nn.Module):
     '''
     https://github.com/PaddlePaddle/PaddleSeg/blob/release/2.7/paddleseg/models/losses/cross_entropy_loss.py
+
+    Implements the cross entropy loss function.
+    Args:
+        ignore_label (int64, optional): Specifies a target value that is ignored
+                and does not contribute to the input gradient. Default ``255``.
+        weight (tuple|list|ndarray|Tensor, optional): A manual rescaling weight
+            given to each class. Its length must be equal to the number of classes.
+            Default ``None``.
+        top_k_percent_pixels (float, optional): the value lies in [0.0, 1.0].
+            When its value < 1.0, only compute the loss for the top k percent pixels
+            (e.g., the top 20% pixels). This is useful for hard pixel mining. Default ``1.0``.
+        label_smoothing (float, optional): the value lies in [0.0, 1.0]. Default ``0.0``.
     '''
     def __init__(self, ignore_label: int = 255, weight: Tensor = None, top_k_percent_pixels: float = 1.0, label_smoothing: float = 0.0) -> None:
-        super(CrossEntropyLoss, self).__init__()
+        super().__init__()
         self.weight = weight
         self.ignore_label = ignore_label
         self.label_smoothing = label_smoothing
@@ -64,7 +76,7 @@ class CrossEntropyLoss(nn.Module):
             _one_hot = F.one_hot(label * mask, logit.shape[1])
             coef = (_one_hot * self.weight).sum(dim=-1)
         else:
-            coef = torch.ones_like(label)
+            coef = torch.ones_like(label).float()
         
         if self.top_k_percent_pixels == 1.0:
             avg_loss = loss.mean() / (self.eps + (coef * mask).mean())
@@ -89,11 +101,21 @@ if __name__ == '__main__':
 
     print(target.dtype)
 
-    loss = CrossEntropyLoss(weight=torch.randn(5), top_k_percent_pixels=0.9)
+    loss = CrossEntropyLoss()
+    # loss = CrossEntropyLoss(weight=torch.randn(5), top_k_percent_pixels=0.8)
 
     out = loss(input, target)
 
     print(out, out.dtype)
+
+    loss1 = nn.CrossEntropyLoss()
+
+    print(loss1(input, target))
+
+    # >>> torch.float32
+    # >>> torch.int64
+    # >>> tensor(1.9377, grad_fn=<DivBackward0>) torch.float32
+    # >>> tensor(1.9377, grad_fn=<NllLoss2DBackward0>)
 
     # >>> torch.float32
     # >>> torch.int64

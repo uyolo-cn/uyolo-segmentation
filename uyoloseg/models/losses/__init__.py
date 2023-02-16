@@ -22,3 +22,10 @@
 #
 # THIS SOFTWARE IS PROVIDED BY UYOLO, GROUP AND CONTRIBUTORS
 # ===================================================================
+
+from .compose_loss import ComposeLoss
+from .cross_entropy_loss import CrossEntropyLoss
+from .ohem_cross_entropy_loss import OhemCrossEntropyLoss
+from .dice_loss import DiceLoss
+from .focal_loss import FocalLoss
+from .lovasz_softmax_loss import LovaszSoftmaxLoss
