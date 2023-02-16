@@ -90,6 +90,16 @@ if __name__ == '__main__':
 
     print(out, out.dtype)
 
+    loss1 = nn.CrossEntropyLoss()
+
+    out1 = loss1(input, target)
+
+    print(out1)
+
+    out = out + out1
+
+    out.backward()
+
     # >>> torch.float32
     # >>> torch.int64
     # >>> tensor(1.4726, grad_fn=<DivBackward0>) torch.float32

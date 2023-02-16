@@ -37,7 +37,7 @@ except ImportError: # py3k
 class LovaszSoftmaxLoss(nn.Module):
     def __init__(self, ignore_index=255, classes='present') -> None:
         super().__init__()
-        self.ignore_index = self.ignore_index
+        self.ignore_index = ignore_index
         self.classes = classes
 
     def forward(self, logit, label):
@@ -131,3 +131,30 @@ def lovasz_softmax_flat(probas, labels, classes='present'):
         fg_sorted = fg[perm]
         losses.append(torch.dot(errors_sorted, Variable(lovasz_grad(fg_sorted))))
     return mean(losses)
+
+if __name__ == '__main__':
+    torch.manual_seed(304)
+
+    input = torch.randn(8, 5, 10, 10, requires_grad=True)
+
+    print(input.dtype)
+
+    target = torch.empty(8, 10, 10, dtype=torch.long).random_(5)
+
+    print(target.dtype)
+
+    loss = LovaszSoftmaxLoss()
+
+    out = loss(input, target)
+
+    print(out, out.dtype)
+
+    loss1 = nn.CrossEntropyLoss()
+
+    out1 = loss1(input, target)
+
+    print(out1)
+
+    out = out + out1
+
+    out.backward()

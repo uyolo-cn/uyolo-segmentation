@@ -49,17 +49,15 @@ class DiceLoss(nn.Module):
     def forward(self, logit: Tensor, label: Tensor):
         num_classes =  logit.shape[1]
 
-        mask = (label != self.ignore_index).unsqueeze(dim=1).repeat(1, num_classes, 1, 1).float()
+        mask = (label != self.ignore_index)
 
-        label[label == self.ignore_index] = 0
+        labels_one_hot: Tensor = F.one_hot(label * mask, num_classes).permute((0, 3, 1, 2))
 
-        labels_one_hot: Tensor = F.one_hot(label, num_classes).permute((0, 3, 1, 2)).contiguous() * mask
+        prob = F.softmax(logit, dim=1) * mask.unsqueeze(dim=1)
 
-        logit = F.softmax(logit, dim=1) * mask
+        intersection = (prob * labels_one_hot).sum(dim=[2, 3])
 
-        intersection = (logit * labels_one_hot).sum(dim=[2, 3])
-
-        cardinality = (logit + labels_one_hot).sum(dim=[2, 3])
+        cardinality = (prob + labels_one_hot).sum(dim=[2, 3])
 
         dice_loss = 1 - (2 * intersection + self.smooth) / (cardinality + self.smooth + self.eps)
 
@@ -70,6 +68,7 @@ class DiceLoss(nn.Module):
         return dice_loss.mean()
 
 if __name__ == '__main__':
+    torch.autograd.set_detect_anomaly(True)
     torch.manual_seed(304)
 
     input = torch.randn(8, 5, 10, 10, requires_grad=True)
@@ -89,3 +88,5 @@ if __name__ == '__main__':
     # >>> torch.float32
     # >>> torch.int64
     # >>> tensor(0.7779, grad_fn=<MeanBackward0>) torch.float32
+
+    out.backward()
