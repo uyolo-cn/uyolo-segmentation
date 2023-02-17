@@ -28,6 +28,7 @@ import torch.nn as nn
 from torch.nn import functional as F
 
 from uyoloseg.models.modules import ConvBN
+from uyoloseg.utils.register import registers
 
 class BasicBlock(nn.Module):
     expansion = 1
@@ -147,9 +148,10 @@ class SegmentHead(nn.Module):
             out = F.interpolate(out, size=[height, width], mode='bilinear', align_corners=False)
 
         return out
-
+    
+@registers.model_hub.register
 class DualResNet(nn.Module):
-    def __init__(self, layers, num_classes=19, planes=64, spp_planes=128, head_planes=128, augment=False):
+    def __init__(self, layers=[2, 2, 2, 2], num_classes=19, planes=64, spp_planes=128, head_planes=128, augment=False):
         super().__init__()
         
         self.augment = augment
