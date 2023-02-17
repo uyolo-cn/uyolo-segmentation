@@ -25,10 +25,12 @@
 
 import torch
 import torch.nn as nn
+from torch.nn import functional as F
 
-from ..modules import ConvBN
+from uyoloseg.models.modules import ConvBN
 
 class BasicBlock(nn.Module):
+    expansion = 1
     def __init__(self, c1, c2, s=1, downsample=None, no_relu=False) -> None:
         super().__init__()
         self.conv1 = ConvBN(c1, c2, 3, s)
@@ -79,6 +81,207 @@ class BottleNeck(nn.Module):
         else:
             return self.relu(out)
 
+class DAPPMBlock(nn.Sequential):
+    def __init__(self, c1, c2, k=1, s=1, p=0, with_pool=True, adaptive=False):
+        super().__init__(
+            nn.AdaptiveAvgPool2d(k) if adaptive else nn.AvgPool2d(k, s, p) if with_pool else nn.Identity(),
+            nn.BatchNorm2d(c1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(c1, c2, 1, bias=False) if with_pool else nn.Conv2d(c1, c2, k, s, p, bias=False)
+        )
+
 class DAPPM(nn.Module):
-    def __init__(self, c1, c2, c3):
-        pass
+    def __init__(self, inplanes, branch_planes, outplanes):
+        super().__init__()
+        self.scale0 = DAPPMBlock(inplanes, branch_planes, with_pool=False)
+        self.scale1 = DAPPMBlock(inplanes, branch_planes, 5, 2, 2)
+        self.scale2 = DAPPMBlock(inplanes, branch_planes, 9, 4, 4)
+        self.scale3 = DAPPMBlock(inplanes, branch_planes, 17, 8, 8)
+        self.scale4 = DAPPMBlock(inplanes, branch_planes, (1, 1), adaptive=True)
+
+        self.process1 = DAPPMBlock(branch_planes, branch_planes, 3, p=1, with_pool=False)
+        self.process2 = DAPPMBlock(branch_planes, branch_planes, 3, p=1, with_pool=False)
+        self.process3 = DAPPMBlock(branch_planes, branch_planes, 3, p=1, with_pool=False)
+        self.process4 = DAPPMBlock(branch_planes, branch_planes, 3, p=1, with_pool=False)
+
+        self.compression = DAPPMBlock(branch_planes * 5, outplanes, 1, with_pool=False)
+
+        self.shortcut = DAPPMBlock(inplanes, outplanes, 1, with_pool=False)
+
+    def forward(self, x):
+        width = x.shape[-1]
+        height = x.shape[-2]        
+        x_list = []
+
+        x_list.append(self.scale0(x))
+        x_list.append(self.process1((F.interpolate(self.scale1(x),
+                        size=[height, width],
+                        mode='bilinear', align_corners=False) + x_list[0])))
+        x_list.append((self.process2((F.interpolate(self.scale2(x),
+                        size=[height, width],
+                        mode='bilinear', align_corners=False) + x_list[1]))))
+        x_list.append(self.process3((F.interpolate(self.scale3(x),
+                        size=[height, width],
+                        mode='bilinear', align_corners=False) + x_list[2])))
+        x_list.append(self.process4((F.interpolate(self.scale4(x),
+                        size=[height, width],
+                        mode='bilinear', align_corners=False) + x_list[3])))
+       
+        out = self.compression(torch.cat(x_list, 1)) + self.shortcut(x)
+        return out 
+
+class SegmentHead(nn.Module):
+    def __init__(self, inplanes, interplanes, outplanes, scale_factor=None):
+        super().__init__()
+        self.conv1 = ConvBN(inplanes, interplanes, 3)
+        self.conv2 = ConvBN(interplanes, outplanes, 1, bias=True)
+        self.scale_factor = scale_factor
+
+    def forward(self, x):
+        x = self.conv1(x)
+        out = self.conv2(x)
+
+        if self.scale_factor is not None:
+            height = x.shape[-2] * self.scale_factor
+            width = x.shape[-1] * self.scale_factor
+            out = F.interpolate(out, size=[height, width], mode='bilinear', align_corners=False)
+
+        return out
+
+class DualResNet(nn.Module):
+    def __init__(self, layers, num_classes=19, planes=64, spp_planes=128, head_planes=128, augment=False):
+        super().__init__()
+        
+        self.augment = augment
+
+        self.conv1 = nn.Sequential(
+            ConvBN(3, planes, 3, 2, bias=True),
+            ConvBN(planes, planes, 3, 2, bias=True)
+        )
+
+        self.relu = nn.ReLU(inplace=False)
+
+        self.layer1 = self._make_layer(BasicBlock, planes, planes, layers[0])
+        self.layer2 = self._make_layer(BasicBlock, planes, planes * 2, layers[1], stride=2)
+        self.layer3 = self._make_layer(BasicBlock, planes * 2, planes * 4, layers[2], stride=2)
+        self.layer4 = self._make_layer(BasicBlock, planes * 4, planes * 8, layers[3], stride=2)
+        self.layer3_ = self._make_layer(BasicBlock, planes * 2, planes * 2, 2)
+        self.layer4_ = self._make_layer(BasicBlock, planes * 2, planes * 2, 2)
+        self.layer5_ = self._make_layer(BottleNeck, planes * 2, planes * 2, 1)
+        self.layer5 =  self._make_layer(BottleNeck, planes * 8, planes * 8, 1, stride=2)
+
+        self.compression3 = nn.Sequential(
+            nn.Conv2d(planes * 4, planes * 2, kernel_size=1, bias=False),
+            nn.BatchNorm2d(planes * 2),
+        )
+
+        self.compression4 = nn.Sequential(
+            nn.Conv2d(planes * 8, planes * 2, kernel_size=1, bias=False),
+            nn.BatchNorm2d(planes * 2),
+        )
+
+        self.down3 = nn.Sequential(
+            nn.Conv2d(planes * 2, planes * 4, kernel_size=3, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(planes * 4, ),
+        )
+
+        self.down4 = nn.Sequential(
+            nn.Conv2d(planes * 2, planes * 4, kernel_size=3, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(planes * 4),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(planes * 4, planes * 8, kernel_size=3, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(planes * 8),
+        )
+
+        self.spp = DAPPM(planes * 16, spp_planes, planes * 4)
+
+        if self.augment:
+            self.seghead_extra = SegmentHead(planes * 2, head_planes, num_classes)            
+
+        self.final_layer = SegmentHead(planes * 4, head_planes, num_classes)
+
+        self.apply(self._init_weights)
+
+    def _init_weights(self, m: nn.Module) -> None:
+        if isinstance(m, nn.Conv2d):
+            nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+        elif isinstance(m, nn.BatchNorm2d):
+            nn.init.constant_(m.weight, 1)
+            nn.init.constant_(m.bias, 0)
+
+    def _make_layer(self, block_class, inplanes, planes, blocks, stride=1):
+        downsample = None
+        if stride != 1 or inplanes != planes * block_class.expansion:
+            downsample = nn.Sequential(
+                nn.Conv2d(inplanes, planes * block_class.expansion,
+                          kernel_size=1, stride=stride, bias=False),
+                nn.BatchNorm2d(planes * block_class.expansion),
+            )
+
+        layers = []
+        layers.append(block_class(inplanes, planes, stride, downsample))
+        inplanes = planes * block_class.expansion
+        for i in range(1, blocks):
+            if i == (blocks-1):
+                layers.append(block_class(inplanes, planes, s=1, no_relu=True))
+            else:
+                layers.append(block_class(inplanes, planes, s=1, no_relu=False))
+
+        return nn.Sequential(*layers)
+    
+    def forward(self, x):
+        width_output = x.shape[-1] // 8
+        height_output = x.shape[-2] // 8
+        layers = []
+
+        x = self.conv1(x)
+
+        x = self.layer1(x)
+        layers.append(x)
+
+        x = self.layer2(self.relu(x))
+        layers.append(x)
+  
+        x = self.layer3(self.relu(x))
+        layers.append(x)
+        x_ = self.layer3_(self.relu(layers[1]))
+
+        x = x + self.down3(self.relu(x_))
+        x_ = x_ + F.interpolate(
+                        self.compression3(self.relu(layers[2])),
+                        size=[height_output, width_output],
+                        mode='bilinear', align_corners=False)
+        if self.augment:
+            temp = x_
+
+        x = self.layer4(self.relu(x))
+        layers.append(x)
+        x_ = self.layer4_(self.relu(x_))
+
+        x = x + self.down4(self.relu(x_))
+        x_ = x_ + F.interpolate(
+                        self.compression4(self.relu(layers[3])),
+                        size=[height_output, width_output],
+                        mode='bilinear', align_corners=False)
+
+        x_ = self.layer5_(self.relu(x_))
+        x = F.interpolate(
+                        self.spp(self.layer5(self.relu(x))),
+                        size=[height_output, width_output],
+                        mode='bilinear', align_corners=False)
+
+        x_ = self.final_layer(x + x_)
+
+        if self.augment: 
+            x_extra = self.seghead_extra(temp)
+            return [x_, x_extra]
+        else:
+            return x_
+
+        
+if __name__ == '__main__':
+    model = DualResNet([2, 2, 2, 2])
+    x = torch.zeros(2, 3, 224, 224)
+    outs = model(x)
+    for y in outs:
+        print(y.shape)
