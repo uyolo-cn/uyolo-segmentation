@@ -148,8 +148,7 @@ class SegmentHead(nn.Module):
             out = F.interpolate(out, size=[height, width], mode='bilinear', align_corners=False)
 
         return out
-    
-@registers.model_hub.register
+
 class DualResNet(nn.Module):
     def __init__(self, layers=[2, 2, 2, 2], num_classes=19, planes=64, spp_planes=128, head_planes=128, augment=False):
         super().__init__()
@@ -279,6 +278,14 @@ class DualResNet(nn.Module):
             return [x_, x_extra]
         else:
             return x_
+
+@registers.model_hub.register
+def DDRNet23(**kargs):
+    return DualResNet(**kargs)
+
+@registers.model_hub.register
+def DDRNet23_slim(**kargs):
+    return DualResNet(planes=32, head_planes=64, **kargs)
 
         
 if __name__ == '__main__':

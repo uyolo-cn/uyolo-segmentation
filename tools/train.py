@@ -32,7 +32,7 @@ import torch
 from pytorch_lightning.callbacks import TQDMProgressBar
 
 from uyoloseg.datasets import build_dataset, naive_collate
-from uyoloseg.utils import cfg, update_config, UYOLOLightningLogger, set_multi_processing, set_same_logger
+from uyoloseg.utils import cfg, update_config, UYOLOLightningLogger, set_multi_processing, set_same_logger, registers, import_all_modules_for_register
 from uyoloseg.core import build_evaluator, TrainingTask
 
 def parse_args():
@@ -53,14 +53,14 @@ def parse_args():
 def main():
     args = parse_args()
 
+    logger = UYOLOLightningLogger(cfg.save_dir)
+    import_all_modules_for_register()
+    logger.dump_cfg(cfg)
+
     local_rank = int(args.local_rank)
     torch.backends.cudnn.enabled = True
     torch.backends.cudnn.benchmark = True
     device = torch.device('cpu' if cfg.device.gpus == -1 else 'cuda')
-
-    logger = UYOLOLightningLogger(cfg.save_dir)
-    set_same_logger(logger)
-    logger.dump_cfg(cfg)
 
     if args.seed is not None:
         pl.seed_everything(args.seed)
@@ -140,5 +140,4 @@ def main():
     trainer.fit(task, train_dataloader, val_dataloader, ckpt_path=model_resume_path)
 
 if __name__ == '__main__':
-    
     main()

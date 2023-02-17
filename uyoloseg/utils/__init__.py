@@ -26,3 +26,4 @@
 from .config import cfg, update_config
 from .logger import UYOLOLightningLogger, set_same_logger
 from .setup_env import set_multi_processing
+from .register import registers, import_all_modules_for_register

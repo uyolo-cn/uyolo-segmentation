@@ -23,20 +23,4 @@
 # THIS SOFTWARE IS PROVIDED BY UYOLO, GROUP AND CONTRIBUTORS
 # ===================================================================
 
-from .DDRNet import DualResNet
-
-class ModelHub:
-    def __init__(self) -> None:
-        pass
-    
-    @staticmethod
-    def get_model(name, *args, **krags):
-
-        if name == "DDRNet23":
-            return DualResNet(*args, **krags)
-        
-        elif name == "DDRNet23_slim":
-            return DualResNet(*args, **krags, planes=32, head_planes=64)
-        
-        else:
-            return None
+from .ddrnet import DDRNet23, DDRNet23_slim

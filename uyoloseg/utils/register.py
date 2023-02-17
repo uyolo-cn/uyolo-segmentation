@@ -1,10 +1,15 @@
 import logging
 import importlib
 
-HUB_MODULES = ["BiSeNetV2", "DDRNet", "PIDNet", "RTFormer"]
+logger = logging.getLogger('uyoloseg')
+
+HUB_MODULES = ["bisenetv2", "ddrnet", "pidnet", "rtformer"]
 
 ALL_MODULES = [
-    ("uyoloseg.models.hub", HUB_MODULES)
+    ("uyoloseg.models.hub", HUB_MODULES),
+    ("uyoloseg.models.backbones", None),
+    ("uyoloseg.models.heads", None),
+    ("uyoloseg.models.losses", None)
 ]
 
 
@@ -13,7 +18,7 @@ def _handle_errors(errors):
     if not errors:
         return
     for name, err in errors:
-        logging.warning("Module {} import failed: {}".format(name, err))
+        logger.warning("Module {} import failed: {}".format(name, err))
 
 
 def import_all_modules_for_register(custom_module_paths=None):
@@ -46,7 +51,7 @@ class Register:
         if key is None:
             key = value.__name__
         if key in self._dict:
-            logging.warning("Key %s already in registry %s." % (key, self._name))
+            logger.warning("Key %s already in registry %s." % (key, self._name))
         self._dict[key] = value
 
     def register(self, target):

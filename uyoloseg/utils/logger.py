@@ -36,7 +36,7 @@ from termcolor import colored
 class UYOLOLightningLogger(LightningLoggerBase):
     def __init__(self, save_dir="./", **kwargs):
         super().__init__()
-        self._name = "uyolo"
+        self._name = "uyoloseg"
         self._version = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
         self._save_dir = os.path.join(save_dir, f"logs-{self._version}")
 
@@ -46,6 +46,8 @@ class UYOLOLightningLogger(LightningLoggerBase):
 
         self._experiment = None
         self._kwargs = kwargs
+
+        self._set_same_logger()
 
     @property
     def name(self):
@@ -143,6 +145,6 @@ class UYOLOLightningLogger(LightningLoggerBase):
         self.experiment.close()
         self.save()
 
-def set_same_logger(logger):
-    lightning_lite.utilities.seed.log = logger
-    lightning_lite.utilities.rank_zero.rank_zero_module.log = logger
+    def _set_same_logger(self):
+        lightning_lite.utilities.seed.log = self
+        lightning_lite.utilities.rank_zero.rank_zero_module.log = self
