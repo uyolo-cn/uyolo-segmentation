@@ -26,6 +26,6 @@ pip install -v -e .
 
 # <img src="./docs/assets/license_ico.png" width="30"/> License
 
-uyolo-segmentation is released under the Apache 2.0 license.
+uyolo-segmentation is released under the [Apache 2.0 license](./LICENSE).
 
 # <img src="./docs/assets/acknowledgement_ico.png" width="30"/> Acknowledgement
