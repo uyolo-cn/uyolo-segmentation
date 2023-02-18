@@ -4,12 +4,13 @@ import importlib
 logger = logging.getLogger('uyoloseg')
 
 HUB_MODULES = ["bisenetv2", "ddrnet", "pidnet", "rtformer"]
+LOSSES_MODULES = ["cross_entropy_loss", "dice_loss", "focal_loss", "lovasz_softmax_loss", "ohem_cross_entropy_loss", "compose_loss"]
 
 ALL_MODULES = [
     ("uyoloseg.models.hub", HUB_MODULES),
-    ("uyoloseg.models.backbones", None),
-    ("uyoloseg.models.heads", None),
-    ("uyoloseg.models.losses", None)
+    # ("uyoloseg.models.backbones", None),
+    # ("uyoloseg.models.heads", None),
+    ("uyoloseg.models.losses", LOSSES_MODULES)
 ]
 
 
@@ -27,7 +28,6 @@ def import_all_modules_for_register(custom_module_paths=None):
     for base_dir, modules in ALL_MODULES:
         for name in modules:
             full_name = base_dir + "." + name
-            print(full_name)
             all_modules.append(full_name)
     if isinstance(custom_module_paths, list):
         all_modules += custom_module_paths
@@ -84,8 +84,4 @@ class registers():  # pylint: disable=invalid-name, too-few-public-methods
     raise RuntimeError("Registries is not intended to be instantiated")
 
   model_hub = Register('model_hub')
-    
-if __name__ == "__main__":
-    print("Register.model._dict before: ", registers.model_hub._dict)
-    import_all_modules_for_register()
-    print("Register.model._dict after: ", registers.model_hub._dict)
+  losses = Register('losses')

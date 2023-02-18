@@ -27,6 +27,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from uyoloseg.utils.register import registers
+
+@registers.losses.register
 class ComposeLoss(nn.Module):
     """
     Weighted computations for multiple Loss.

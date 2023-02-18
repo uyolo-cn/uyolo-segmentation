@@ -32,7 +32,7 @@ import torch
 from pytorch_lightning.callbacks import TQDMProgressBar
 
 from uyoloseg.datasets import build_dataset, naive_collate
-from uyoloseg.utils import cfg, update_config, UYOLOLightningLogger, set_multi_processing, set_same_logger, registers, import_all_modules_for_register
+from uyoloseg.utils import cfg, update_config, UYOLOLightningLogger, set_multi_processing, import_all_modules_for_register
 from uyoloseg.core import build_evaluator, TrainingTask
 
 def parse_args():
@@ -54,8 +54,9 @@ def main():
     args = parse_args()
 
     logger = UYOLOLightningLogger(cfg.save_dir)
-    import_all_modules_for_register()
     logger.dump_cfg(cfg)
+
+    import_all_modules_for_register()
 
     local_rank = int(args.local_rank)
     torch.backends.cudnn.enabled = True

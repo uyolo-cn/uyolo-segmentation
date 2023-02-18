@@ -28,6 +28,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
 
+from uyoloseg.utils.register import registers
+
+@registers.losses.register
 class FocalLoss(nn.Module):
     """
     The implement of focal loss for multi class.

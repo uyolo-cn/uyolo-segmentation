@@ -26,6 +26,9 @@ import torch
 from torch import nn, Tensor
 from torch.nn import functional as F
 
+from uyoloseg.utils.register import registers
+
+@registers.losses.register
 class OhemCrossEntropyLoss(nn.Module):
     '''
     https://github.com/PaddlePaddle/PaddleSeg/blob/release/2.7/paddleseg/models/losses/ohem_cross_entropy_loss.py

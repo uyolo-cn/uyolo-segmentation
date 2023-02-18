@@ -33,7 +33,9 @@ try:
 except ImportError: # py3k
     from itertools import  filterfalse as ifilterfalse
 
+from uyoloseg.utils.register import registers
 
+@registers.losses.register
 class LovaszSoftmaxLoss(nn.Module):
     def __init__(self, ignore_index=255, classes='present') -> None:
         super().__init__()

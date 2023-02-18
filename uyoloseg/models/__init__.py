@@ -23,10 +23,17 @@
 # THIS SOFTWARE IS PROVIDED BY UYOLO, GROUP AND CONTRIBUTORS
 # ===================================================================
 
+import torch
+import torch.nn as nn
 import copy
 
 from .hub import *
 from .losses import *
+
+from uyoloseg.utils.register import registers
+
+class FullModel(nn.Module):
+    
 
 def build_model(cfg):
     pass

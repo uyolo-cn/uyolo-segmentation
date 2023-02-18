@@ -27,6 +27,9 @@ import torch
 from torch import nn, Tensor
 from torch.nn import functional as F
 
+from uyoloseg.utils.register import registers
+
+@registers.losses.register
 class DiceLoss(nn.Module):
     '''
     https://github.com/PaddlePaddle/PaddleSeg/blob/release/2.7/paddleseg/models/losses/dice_loss.py
