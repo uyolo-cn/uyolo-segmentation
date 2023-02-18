@@ -79,7 +79,7 @@ class TrainingTask(LightningModule):
             )
             self.scalar_summary("Train_loss/lr", "Train", lr, self.global_step)
             for loss_name in loss_dict:
-                log_msg += "{}:{:.4f}| ".format(
+                log_msg += "{}:{:.6f}| ".format(
                     loss_name, loss_dict[loss_name].mean().item()
                 )
                 self.scalar_summary(
@@ -117,9 +117,10 @@ class TrainingTask(LightningModule):
                 sum(self.trainer.num_val_batches),
                 memory,
                 lr,
+                loss.item()
             )
             for loss_name in loss_states:
-                log_msg += "{}:{:.4f}| ".format(
+                log_msg += "{}:{:.6f}| ".format(
                     loss_name, loss_states[loss_name].mean().item()
                 )
             self.logger.info(log_msg)
@@ -141,7 +142,7 @@ class TrainingTask(LightningModule):
                     os.path.join(self.cfg.save_dir, 'weights', "model_best_avg.pth")
                 )
 
-        self.logger.log_metrics(all_result)
+        self.logger.log_metrics(all_result, self.current_epoch + 1)
 
     def configure_optimizers(self):
         """
@@ -267,4 +268,4 @@ class TrainingTask(LightningModule):
             else:
                 self.weight_averager.load_state_dict(avg_params)
                 self.logger.info("Loaded average state from checkpoint.")
-    
+  

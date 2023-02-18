@@ -10,9 +10,11 @@ save_dir: './exp'
 # Model
 model:
   network:
-    name: DDRNet_23_slim
+    name: DDRNet23_slim
+    output_dim: 2
+    augment: False
   loss:
-    name: CrossEntropyLoss
+    name: OhemCrossEntropyLoss
 
 # Data
 train_dataset:
@@ -47,9 +49,21 @@ val_dataset:
 
 # Schedule
 schedule:
+  optimizer:
+    name: SGD
+    lr: 0.01
+    weight_decay: 0.0005
+  warmup:
+    name: linear
+    steps: 500
+    ratio: 0.0001
+  lr_schedule:
+    name: CosineAnnealingLR
+    T_max: 300
+    eta_min: 0.00005
   resume: False
   total_epochs: 300
-  val_intervals: 10
+  val_intervals: 1
 
 evaluator:
   name: SegmentEvaluator

@@ -100,7 +100,7 @@ if __name__ == '__main__':
 
     print(input.dtype)
 
-    target = torch.empty(8, 10, 10, dtype=torch.long).random_(5)
+    target = torch.empty(8, 1, 10, 10, dtype=torch.long).random_(5)
 
     print(target.dtype)
 

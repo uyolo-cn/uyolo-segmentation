@@ -65,8 +65,8 @@ class CustomDataset(Dataset):
 
 
     def __getitem__(self, index) -> Tuple[Tensor, Tensor]:
-        image = io.read_image(self.files[index][0])
-        label = io.read_image(self.files[index][1])
+        image = io.read_image(self.files[index][0].strip())
+        label = io.read_image(self.files[index][1].strip())
 
         if self.transform:
             image, label = self.transform(image, label)

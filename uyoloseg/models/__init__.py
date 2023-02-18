@@ -25,6 +25,7 @@
 
 import torch
 import torch.nn as nn
+from torch import Tensor
 import copy
 
 from .hub import *
@@ -33,10 +34,49 @@ from .losses import *
 from uyoloseg.utils.register import registers
 
 class FullModel(nn.Module):
-    
+    def __init__(self, cfg) -> None:
+        super().__init__()
+        if cfg.network.name in registers.model_hub:
+            network_cfg = copy.deepcopy(cfg.network)
+            name = network_cfg.pop("name")
+            network_cfg.pop("backbone")
+            network_cfg.pop("fpn")
+            network_cfg.pop("head")
+            self.model = registers.model_hub[name](**network_cfg)
+        else:
+            pass
+
+        if cfg.loss.name in registers.losses:
+            losses_cfg = copy.deepcopy(cfg.loss)
+            name = losses_cfg.pop("name")
+            self.loss_func = registers.losses[name](**losses_cfg)
+        else:
+            raise ValueError(f"{cfg.losses.name} not exists!!!")
+
+    def forward(self, batch):
+        return self.model(batch['img'])
+
+    def forward_train(self, batch):
+        logit = self.model(batch['img'])
+
+        if isinstance(logit, list) and len(logit) == 1:
+            logit = logit[0]
+
+        if isinstance(logit, list) and len(logit) > 1 and not isinstance(self.loss_func, ComposeLoss):
+            raise ValueError("Multi outputs should use ComposeLoss!!!")
+
+        loss = self.loss_func(logit, batch['mask'].squeeze())
+
+        loss_states = {"loss": loss}
+
+        if isinstance(self.loss_func, ComposeLoss):
+            loss, loss_states = loss
+        
+        return logit, loss, loss_states
+
 
 def build_model(cfg):
-    pass
+    return FullModel(cfg)
 
 def build_weight_averager(cfg):
     pass

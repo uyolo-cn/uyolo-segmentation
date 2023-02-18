@@ -49,9 +49,10 @@ class OhemCrossEntropyLoss(nn.Module):
         mask.required_grad = False
         label.required_grad = False
 
-        prob = F.softmax(logit, dim=1).transpose(1, 0).reshape((logit.shape[1], -1))
-
         if self.min_kept < num_valid and num_valid > 0:
+            
+            prob = F.softmax(logit, dim=1).transpose(1, 0).reshape((logit.shape[1], -1))
+
             prob = prob + (1 - mask)
 
             prob = (F.one_hot(label, logit.shape[1]).transpose(1, 0) * prob).sum(dim=0)

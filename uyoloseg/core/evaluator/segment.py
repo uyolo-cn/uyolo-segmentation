@@ -34,7 +34,7 @@ class SegmentMetrics:
         self.hist = torch.zeros(num_classes, num_classes).to(device)
 
     def update(self, pred: Tensor, target: Tensor) -> None:
-        pred = pred.argmax(dim=1)
+        pred = pred.argmax(dim=1, keepdim=True)
         keep = target != self.ignore_label
         self.hist += torch.bincount(target[keep] * self.num_classes + pred[keep], minlength=self.num_classes**2).view(self.num_classes, self.num_classes)
 
@@ -43,21 +43,21 @@ class SegmentMetrics:
         miou = ious[~ious.isnan()].mean().item()
         ious *= 100
         miou *= 100
-        return ious.cpu().numpy().round(2).tolist(), round(miou, 2)
+        return ious, round(miou, 2)
 
     def compute_f1(self) -> Tuple[Tensor, Tensor]:
         f1 = 2 * self.hist.diag() / (self.hist.sum(0) + self.hist.sum(1))
         mf1 = f1[~f1.isnan()].mean().item()
         f1 *= 100
         mf1 *= 100
-        return f1.cpu().numpy().round(2).tolist(), round(mf1, 2)
+        return f1, round(mf1, 2)
 
     def compute_pixel_acc(self) -> Tuple[Tensor, Tensor]:
         acc = self.hist.diag() / self.hist.sum(1)
         macc = acc[~acc.isnan()].mean().item()
         acc *= 100
         macc *= 100
-        return acc.cpu().numpy().round(2).tolist(), round(macc, 2)
+        return acc, round(macc, 2)
 
 
 class SegmentEvaluator:
@@ -67,11 +67,11 @@ class SegmentEvaluator:
     def update(self, pred, target):
         self.metric.update(pred, target)
     
-    def evalutate(self):
+    def evaluate(self):
         eval_results = {}
         
-        eval_results['ious'], eval_results['miou'] = self.metrics.compute_iou()
-        eval_results['acc'], eval_results['macc'] = self.metrics.compute_pixel_acc()
-        eval_results['f1'], eval_results['mf1'] = self.metrics.compute_f1()
+        _, eval_results['miou'] = self.metric.compute_iou()
+        _, eval_results['macc'] = self.metric.compute_pixel_acc()
+        _, eval_results['mf1'] = self.metric.compute_f1()
 
         return eval_results

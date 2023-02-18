@@ -37,7 +37,7 @@ def build_optimizer(model, config):
     config = copy.deepcopy(config)
     param_dict = {}
 
-    name = config.pop("name")
+    optim_name = config.pop("name")
 
     base_lr = config.get("lr", None)
     base_wd = config.get("weight_decay", None)
@@ -46,11 +46,10 @@ def build_optimizer(model, config):
     no_bias_decay = config.pop("no_bias_decay", False)
     param_level_cfg = config.pop("param_level_cfg", {})
 
-
     for name, p in model.named_parameters():
         if not p.requires_grad:
             continue
-
+        param_dict[p] = {"name": name}
         for key in param_level_cfg:
             if key in name:
                 if "lr_mult" in param_level_cfg[key] and base_lr:
@@ -78,3 +77,9 @@ def build_optimizer(model, config):
     param_groups = []
     for p, pconfig in param_dict.items():
         param_groups += [{"params": p, **pconfig}]
+
+    # import pdb; pdb.set_trace()
+
+    optimizer = getattr(torch.optim, optim_name)(param_groups, **config)
+
+    return optimizer

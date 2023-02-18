@@ -26,6 +26,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch import Tensor
 
 from uyoloseg.utils.register import registers
 
@@ -41,21 +42,51 @@ class ComposeLoss(nn.Module):
         A callable object of MixedLoss.
     """
 
-    def __init__(self, losses, coef):
+    def __init__(self, losses=None, coef=None, indexes=None, names=None):
         super().__init__()
         if not isinstance(losses, list):
             raise TypeError('`losses` must be a list!')
         if not isinstance(coef, list):
             raise TypeError('`coef` must be a list!')
+        if not isinstance(indexes, list):
+            raise TypeError('`indexes` must be a list!')
+        
         len_losses = len(losses)
         len_coef = len(coef)
+        len_indexes = len(indexes)
+
         if len_losses != len_coef:
             raise ValueError(
                 'The length of `losses` should equal to `coef`, but they are {} and {}.'
                 .format(len_losses, len_coef))
+        
+        if len_losses != len_indexes:
+            raise ValueError(
+                'The length of `losses` should equal to `indexes`, but they are {} and {}.'
+                .format(len_losses, len_indexes))
 
         self.losses = losses
         self.coef = coef
+        self.indexes = indexes
+        self.names = names
 
     def forward(self, logits, labels):
-        return [w * loss(logits, labels) for w, loss in zip(self.coef, self.losses)]
+        if isinstance(logits, Tensor):
+            logits = [logits]
+        if isinstance(labels, Tensor):
+            labels = [labels]
+        
+        first_indexes, second_indexes = [idx[0] for idx in self.indexes], [idx[1] for idx in self.indexes]
+        if max(first_indexes) >= len(logits) or min(first_indexes) < 0:
+            raise ValueError(
+                'The first number in `indexes` should in [0, {}).'
+                .format(len(logits)))
+        if max(second_indexes) >= len(labels) or min(second_indexes) < 0:
+            raise ValueError(
+                'The second number in `indexes` should in [0, {}).'
+                .format(len(labels)))
+
+        if self.names is None:
+            names = [f'loss_{i}' for i in range(len(loss_list))]
+        loss_list = [w * loss(logits[idx[0]], labels[idx[1]]) for idx, w, loss in zip(self.indexes, self.coef, self.losses)]
+        return sum(loss_list), dict(zip(names, loss_list))

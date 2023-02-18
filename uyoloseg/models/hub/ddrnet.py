@@ -150,7 +150,7 @@ class SegmentHead(nn.Module):
         return out
 
 class DualResNet(nn.Module):
-    def __init__(self, layers=[2, 2, 2, 2], num_classes=19, planes=64, spp_planes=128, head_planes=128, augment=False):
+    def __init__(self, output_dim=19, layers=[2, 2, 2, 2], planes=64, spp_planes=128, head_planes=128, augment=False):
         super().__init__()
         
         self.augment = augment
@@ -197,9 +197,9 @@ class DualResNet(nn.Module):
         self.spp = DAPPM(planes * 16, spp_planes, planes * 4)
 
         if self.augment:
-            self.seghead_extra = SegmentHead(planes * 2, head_planes, num_classes)            
+            self.seghead_extra = SegmentHead(planes * 2, head_planes, output_dim)            
 
-        self.final_layer = SegmentHead(planes * 4, head_planes, num_classes)
+        self.final_layer = SegmentHead(planes * 4, head_planes, output_dim)
 
         self.apply(self._init_weights)
 
@@ -273,11 +273,16 @@ class DualResNet(nn.Module):
 
         x_ = self.final_layer(x + x_)
 
+        logit_list = [x_]
+
         if self.augment: 
             x_extra = self.seghead_extra(temp)
-            return [x_, x_extra]
-        else:
-            return x_
+            logit_list.append(x_)
+
+        return [
+            F.interpolate(
+                logit, [height_output * 8, width_output * 8], mode='bilinear') for logit in logit_list
+        ]
 
 @registers.model_hub.register
 def DDRNet23(**kargs):
