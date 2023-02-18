@@ -2,7 +2,7 @@
 
 # <img src="./docs/assets/introduction_ico.png" width="30"/> Introduction
 
-uyolo-segmentation is an open source semantic segmentation toolbox based on PyTorch Lightning.
+`uyolo-segmentation` is an open source semantic segmentation toolbox based on PyTorch Lightning.
 
 # <img src="./docs/assets/usage_ico.png" width="30"/> Getting Started
 
@@ -10,13 +10,13 @@ uyolo-segmentation is an open source semantic segmentation toolbox based on PyTo
 
 ### 1. Install uyolo-segmentation from Source
 
-Clone the uyolo-segmentation repo from Github.
+Clone the `uyolo-segmentation` repo from Github.
 
 ```shell
 git clone https://github.com/uyolo1314/uyolo-segmentation
 ```
 
-Run the following command, install uyolo-segmentation from source. If you make modification to uyolo-segmentation/uyoloseg, it will be efficient without reinstallation.
+Run the following command, install `uyolo-segmentation` from source. If you make modification to uyolo-segmentation/uyoloseg, it will be efficient without reinstallation.
 
 ```shell
 cd uyolo-segmentation
@@ -24,9 +24,24 @@ pip install -r requirements.txt
 pip install -v -e .
 ```
 
+## <img src="./docs/assets/train_model.png" width="25"/> How to Train
+
+`uyolo-segmentation` is now using pytorch lightning for training. For both single-GPU or multiple-GPUs, run:
+
+```shell
+config_file=configs/custom.yaml
+python tools/train.py --cfg ${config_file}
+```
+
+## <img src="./docs/assets/deployment.png" width="25"/> Deployment
+- [ ] TensorRT
+- [ ] OpenVINO
+- [ ] NCNN
+- [ ] Ascend
+
 # <img src="./docs/assets/license_ico.png" width="30"/> License
 
-uyolo-segmentation is released under the [Apache 2.0 license](./LICENSE).
+`uyolo-segmentation` is released under the [Apache 2.0 license](./LICENSE).
 
 # <img src="./docs/assets/acknowledgement_ico.png" width="30"/> Acknowledgement
 
