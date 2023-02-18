@@ -8,7 +8,7 @@
 
 ## <img src="./docs/assets/install.png" width="25"/> Installation
 
-### 1. Install uyolo-segmentation from Source
+### 1. Install from Source
 
 Clone the `uyolo-segmentation` repo from Github.
 
@@ -16,7 +16,7 @@ Clone the `uyolo-segmentation` repo from Github.
 git clone https://github.com/uyolo1314/uyolo-segmentation
 ```
 
-Run the following command, install `uyolo-segmentation` from source. If you make modification to uyolo-segmentation/uyoloseg, it will be efficient without reinstallation.
+Run the following command, install `uyolo-segmentation` from source. If you make modification to `uyolo-segmentation/uyoloseg`, it will be efficient without reinstallation.
 
 ```shell
 cd uyolo-segmentation
