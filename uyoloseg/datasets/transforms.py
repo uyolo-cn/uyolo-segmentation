@@ -26,8 +26,7 @@ import torch
 from torch import Tensor
 import torchvision.transforms as transforms
 import torchvision.transforms.functional as trans
-from typing import Tuple, List, Union, Tuple, Optional
-import random
+from typing import Tuple, List, Union, Tuple
 
 class Normalize:
     def __init__(self, mean, std) -> None:
@@ -86,7 +85,7 @@ class RandomHorizontalFlip(transforms.RandomHorizontalFlip):
         super().__init__(p)
 
     def __call__(self, img: Tensor, mask: Tensor) -> Tuple[Tensor, Tensor]:
-        return super().__call__(img), mask
+        return super().__call__(img), super().__call__(mask)
 
 
 class RandomVerticalFlip(transforms.RandomVerticalFlip):
@@ -94,7 +93,7 @@ class RandomVerticalFlip(transforms.RandomVerticalFlip):
         super().__init__(p)
 
     def __call__(self, img: Tensor, mask: Tensor) -> Tuple[Tensor, Tensor]:
-        return super().__call__(img), mask
+        return super().__call__(img), super().__call__(mask)
 
 
 class RandomGrayscale(transforms.RandomGrayscale):
