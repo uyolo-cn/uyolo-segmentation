@@ -12,9 +12,18 @@ model:
   network:
     name: DDRNet23_slim
     output_dim: 2
-    augment: False
+    augment: True
   loss:
-    name: OhemCrossEntropyLoss
+    name: ComposeLoss
+    losses: 
+      - name: OhemCrossEntropyLoss
+        ignore_label: 255
+        thresh: 0.9
+        min_kept: 131072
+      - name: CrossEntropyLoss
+        ignore_label: 255
+    coef: [0.4, 1]
+    indexes: [[1, 1, 0], [0, 0, 0]]
 
 # Data
 train_dataset:

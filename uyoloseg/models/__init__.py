@@ -44,12 +44,12 @@ class FullModel(nn.Module):
             network_cfg.pop("head")
             self.model = registers.model_hub[name](**network_cfg)
         else:
-            pass
+            assert False, "TODO"
+
+        import pdb; pdb.set_trace()
 
         if cfg.loss.name in registers.losses:
-            losses_cfg = copy.deepcopy(cfg.loss)
-            name = losses_cfg.pop("name")
-            self.loss_func = registers.losses[name](**losses_cfg)
+            self.loss_func = build_loss(cfg.loss)
         else:
             raise ValueError(f"{cfg.losses.name} not exists!!!")
 

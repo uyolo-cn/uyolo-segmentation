@@ -116,8 +116,7 @@ class TrainingTask(LightningModule):
                 batch_idx + 1,
                 sum(self.trainer.num_val_batches),
                 memory,
-                lr,
-                loss.item()
+                lr
             )
             for loss_name in loss_states:
                 log_msg += "{}:{:.6f}| ".format(

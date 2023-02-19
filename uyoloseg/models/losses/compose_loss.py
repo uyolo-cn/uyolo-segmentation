@@ -38,6 +38,7 @@ class ComposeLoss(nn.Module):
     Args:
         losses (list[nn.Layer]): A list consisting of multiple loss classes
         coef (list[float|int]): Weighting coefficient of multiple loss
+        indexes(list[(int, int, int)]): corrsponding to (loss_idx, logit_idx, target_idx)
     Returns:
         A callable object of MixedLoss.
     """
@@ -51,19 +52,19 @@ class ComposeLoss(nn.Module):
         if not isinstance(indexes, list):
             raise TypeError('`indexes` must be a list!')
         
-        len_losses = len(losses)
+        loss_indexes = [idx[0] for idx in indexes]
+        if max(loss_indexes) >= len(losses) or min(loss_indexes) < 0:
+            raise ValueError(
+                'The loss number in `indexes` should in [0, {}).'
+                .format(len(losses)))
+
         len_coef = len(coef)
         len_indexes = len(indexes)
 
-        if len_losses != len_coef:
+        if len_indexes != len_coef:
             raise ValueError(
-                'The length of `losses` should equal to `coef`, but they are {} and {}.'
-                .format(len_losses, len_coef))
-        
-        if len_losses != len_indexes:
-            raise ValueError(
-                'The length of `losses` should equal to `indexes`, but they are {} and {}.'
-                .format(len_losses, len_indexes))
+                'The length of `indexes` should equal to `coef`, but they are {} and {}.'
+                .format(len_indexes, len_coef))
 
         self.losses = losses
         self.coef = coef
@@ -76,17 +77,19 @@ class ComposeLoss(nn.Module):
         if isinstance(labels, Tensor):
             labels = [labels]
         
-        first_indexes, second_indexes = [idx[0] for idx in self.indexes], [idx[1] for idx in self.indexes]
-        if max(first_indexes) >= len(logits) or min(first_indexes) < 0:
+        logit_indexes, label_indexes = [idx[1] for idx in self.indexes], [idx[2] for idx in self.indexes]
+        if max(logit_indexes) >= len(logits) or min(logit_indexes) < 0:
             raise ValueError(
-                'The first number in `indexes` should in [0, {}).'
+                'The logit number in `indexes` should in [0, {}).'
                 .format(len(logits)))
-        if max(second_indexes) >= len(labels) or min(second_indexes) < 0:
+        if max(label_indexes) >= len(labels) or min(label_indexes) < 0:
             raise ValueError(
-                'The second number in `indexes` should in [0, {}).'
+                'The label number in `indexes` should in [0, {}).'
                 .format(len(labels)))
 
         if self.names is None:
-            names = [f'loss_{i}' for i in range(len(loss_list))]
-        loss_list = [w * loss(logits[idx[0]], labels[idx[1]]) for idx, w, loss in zip(self.indexes, self.coef, self.losses)]
+            names = [f'loss_{i}' for i in range(len(self.indexes))]
+
+        loss_list = [w * self.losses[idx[0]](logits[idx[1]], labels[idx[2]]) for idx, w in zip(self.indexes, self.coef)]
+
         return sum(loss_list), dict(zip(names, loss_list))
