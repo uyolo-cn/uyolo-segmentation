@@ -24,7 +24,9 @@
 # ===================================================================
 import torch
 from torch import Tensor
-from typing import Tuple
+from typing import Tuple, Union
+
+from uyoloseg.utils import registers
 
 
 class SegmentMetrics:
@@ -58,11 +60,15 @@ class SegmentMetrics:
         acc *= 100
         macc *= 100
         return acc, round(macc, 2)
+    
+    def reset(self):
+        self.hist.fill_(0)
 
-
+@registers.evaluator.register
 class SegmentEvaluator:
-    def __init__(self, dataset=None, device=None) -> None:
+    def __init__(self, metric_key='miou', dataset=None, device=None) -> None:
         self.metric = SegmentMetrics(dataset.num_classes, dataset.ignore_index, device)
+        self.metric_key = metric_key
     
     def update(self, pred, target):
         self.metric.update(pred, target)
@@ -75,3 +81,6 @@ class SegmentEvaluator:
         _, eval_results['mf1'] = self.metric.compute_f1()
 
         return eval_results
+
+    def reset(self):
+        self.metric.reset()

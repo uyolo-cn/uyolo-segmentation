@@ -42,16 +42,22 @@ class FullModel(nn.Module):
             network_cfg.pop("backbone")
             network_cfg.pop("fpn")
             network_cfg.pop("head")
+            model_path = None
+            if 'pretrained' in cfg.network:
+                model_path = network_cfg.pop('pretrained')
+
             self.model = registers.model_hub[name](**network_cfg)
+
+            if model_path:
+                state_dict = torch.load(model_path)
+                model_dict = self.model.state_dict()
+                pretrained_state = {k[6:]: v for k, v in state_dict.items() if (k[6:] in model_dict and v.shape == model_dict[k[6:]].shape)}
+                model_dict.update(pretrained_state)
+                self.model.load_state_dict(model_dict, strict=False)
         else:
             assert False, "TODO"
 
-        import pdb; pdb.set_trace()
-
-        if cfg.loss.name in registers.losses:
-            self.loss_func = build_loss(cfg.loss)
-        else:
-            raise ValueError(f"{cfg.losses.name} not exists!!!")
+        self.loss_func = build_loss(cfg.loss)
 
     def forward(self, batch):
         return self.model(batch['img'])
@@ -59,18 +65,10 @@ class FullModel(nn.Module):
     def forward_train(self, batch):
         logit = self.model(batch['img'])
 
-        if isinstance(logit, list) and len(logit) == 1:
-            logit = logit[0]
+        if not isinstance(logit, list):
+            raise ValueError("Model outputs must be list type!!!")
 
-        if isinstance(logit, list) and len(logit) > 1 and not isinstance(self.loss_func, ComposeLoss):
-            raise ValueError("Multi outputs should use ComposeLoss!!!")
-
-        loss = self.loss_func(logit, batch['mask'].squeeze())
-
-        loss_states = {"loss": loss}
-
-        if isinstance(self.loss_func, ComposeLoss):
-            loss, loss_states = loss
+        loss, loss_states = self.loss_func(logit, batch['mask'].squeeze(dim=1))
         
         return logit, loss, loss_states
 

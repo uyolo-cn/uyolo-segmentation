@@ -43,7 +43,7 @@ class ComposeLoss(nn.Module):
         A callable object of MixedLoss.
     """
 
-    def __init__(self, losses=None, coef=None, indexes=None, names=None):
+    def __init__(self, losses=None, coef=[1.0], indexes=[[0, 0, 0]], names=None):
         super().__init__()
         if not isinstance(losses, list):
             raise TypeError('`losses` must be a list!')
@@ -72,20 +72,20 @@ class ComposeLoss(nn.Module):
         self.names = names
 
     def forward(self, logits, labels):
-        if isinstance(logits, Tensor):
+        if not isinstance(logits, list):
             logits = [logits]
-        if isinstance(labels, Tensor):
+        if not isinstance(labels, list):
             labels = [labels]
         
         logit_indexes, label_indexes = [idx[1] for idx in self.indexes], [idx[2] for idx in self.indexes]
-        if max(logit_indexes) >= len(logits) or min(logit_indexes) < 0:
+        if max(logit_indexes) >= len(logits) and min(logit_indexes) < 0:
             raise ValueError(
-                'The logit number in `indexes` should in [0, {}).'
-                .format(len(logits)))
+                'The logit indexes {} should in [0, {}).'
+                .format(logit_indexes, len(logits)))
         if max(label_indexes) >= len(labels) or min(label_indexes) < 0:
             raise ValueError(
-                'The label number in `indexes` should in [0, {}).'
-                .format(len(labels)))
+                'The label indexes {} should in [0, {}).'
+                .format(label_indexes, len(labels)))
 
         if self.names is None:
             names = [f'loss_{i}' for i in range(len(self.indexes))]

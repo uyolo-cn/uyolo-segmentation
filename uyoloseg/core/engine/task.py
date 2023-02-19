@@ -127,10 +127,13 @@ class TrainingTask(LightningModule):
 
     def validation_epoch_end(self, validation_step_outputs) -> None:
         
-        all_result = self.evaluator.evaluate()
+        all_result = self.evaluator.evaluate() # list
 
         if all_result:
-            metric = all_result[self.cfg.evaluator.metric_key]
+
+            metric_key = self.evaluator.evals[self.evaluator.metric_index].metric_key
+
+            metric = all_result[self.evaluator.metric_index][metric_key]
 
             if metric > self.best_metric:
                 self.best_metric = metric
@@ -140,6 +143,8 @@ class TrainingTask(LightningModule):
                 self.save_model_state(
                     os.path.join(self.cfg.save_dir, 'weights', "model_best_avg.pth")
                 )
+        
+        self.evaluator.reset()
 
         self.logger.log_metrics(all_result, self.current_epoch + 1)
 

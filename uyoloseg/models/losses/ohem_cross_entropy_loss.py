@@ -38,7 +38,7 @@ class OhemCrossEntropyLoss(nn.Module):
         self.ignore_label = ignore_label
         self.min_kept = min_kept
         self.thresh = thresh
-        self.eps = 1e-8
+        self.eps = 1e-5
 
     def forward(self, logit, label):
         label = label.long().reshape((-1, ))

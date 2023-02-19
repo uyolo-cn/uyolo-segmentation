@@ -25,12 +25,28 @@
 
 import copy
 
+from .compose import ComposeEvaluator
 from .segment import SegmentEvaluator
 
+from uyoloseg.utils import registers
+
 def build_evaluator(cfg, **kargs):
+    compose_evals = get_evaluator(cfg, **kargs)
+    if not isinstance(compose_evals, ComposeEvaluator):
+        compose_evals = ComposeEvaluator(
+            evals=[compose_evals],
+            indexes=[[0, 0, 0]]
+        )
+    return compose_evals
+
+def get_evaluator(cfg, **kargs):
     eval_cfg = copy.deepcopy(cfg)
     name = eval_cfg.pop("name")
-    if name == "SegmentEvaluator":
-        return SegmentEvaluator(**kargs)
-    else:
-        raise NotImplementedError
+    assert name in registers.evaluator, f"{name} not exists"
+
+    if name != "ComposeEvaluator":
+        return registers.evaluator[name](**eval_cfg, **kargs)
+
+    compose_evals = eval_cfg.pop("evals")
+    evals = [get_evaluator(e_cfg, **kargs) for e_cfg in compose_evals]
+    return registers.evaluator[name](evals, **eval_cfg)

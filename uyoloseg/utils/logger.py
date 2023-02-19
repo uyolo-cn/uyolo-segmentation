@@ -132,8 +132,11 @@ class UYOLOLightningLogger(LightningLoggerBase):
     @rank_zero_only
     def log_metrics(self, metrics, step):
         self.logger.info(f"Val_metrics: {metrics}")
-        for k, v in metrics.items():
-            self.experiment.add_scalars("Val_metrics/" + k, {"Val": v}, step)
+        i = 0
+        for metric in metrics:
+            for k, v in metric.items():
+                self.experiment.add_scalars(f"Val_metrics_{i}/" + k, {"Val": v}, step)
+            i += 1
 
     @rank_zero_only
     def save(self):

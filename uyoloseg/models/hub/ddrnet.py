@@ -277,11 +277,11 @@ class DualResNet(nn.Module):
 
         if self.augment: 
             x_extra = self.seghead_extra(temp)
-            logit_list.append(x_)
+            logit_list = [x_extra, x_]
 
         return [
             F.interpolate(
-                logit, [height_output * 8, width_output * 8], mode='bilinear') for logit in logit_list
+                logit, [height_output * 8, width_output * 8], mode='bilinear', align_corners=False) for logit in logit_list
         ]
 
 @registers.model_hub.register
@@ -294,7 +294,7 @@ def DDRNet23_slim(**kargs):
 
         
 if __name__ == '__main__':
-    model = DualResNet([2, 2, 2, 2])
+    model = DualResNet()
     x = torch.zeros(2, 3, 224, 224)
     outs = model(x)
     for y in outs:

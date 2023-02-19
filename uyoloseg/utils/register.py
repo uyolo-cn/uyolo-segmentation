@@ -5,12 +5,14 @@ logger = logging.getLogger('uyoloseg')
 
 HUB_MODULES = ["bisenetv2", "ddrnet", "pidnet", "rtformer"]
 LOSSES_MODULES = ["cross_entropy_loss", "dice_loss", "focal_loss", "lovasz_softmax_loss", "ohem_cross_entropy_loss", "compose_loss"]
+EVALUATOR_MODULES = ['segment', 'compose']
 
 ALL_MODULES = [
     ("uyoloseg.models.hub", HUB_MODULES),
     # ("uyoloseg.models.backbones", None),
     # ("uyoloseg.models.heads", None),
-    ("uyoloseg.models.losses", LOSSES_MODULES)
+    ("uyoloseg.models.losses", LOSSES_MODULES),
+    ("uyoloseg.core.evaluator", EVALUATOR_MODULES)
 ]
 
 
@@ -85,3 +87,4 @@ class registers():  # pylint: disable=invalid-name, too-few-public-methods
 
   model_hub = Register('model_hub')
   losses = Register('losses')
+  evaluator = Register('evaluator')

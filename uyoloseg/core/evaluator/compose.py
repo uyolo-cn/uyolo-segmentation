@@ -22,37 +22,32 @@
 #
 # THIS SOFTWARE IS PROVIDED BY UYOLO, GROUP AND CONTRIBUTORS
 # ===================================================================
+import torch
+from torch import Tensor
+from typing import Tuple, Union
 
-import copy
-
-from .compose_loss import ComposeLoss
-from .cross_entropy_loss import CrossEntropyLoss
-from .ohem_cross_entropy_loss import OhemCrossEntropyLoss
-from .dice_loss import DiceLoss
-from .focal_loss import FocalLoss
-from .lovasz_softmax_loss import LovaszSoftmaxLoss
-
-from uyoloseg.utils.register import registers
+from uyoloseg.utils import registers
 
 
-def build_loss(cfg):
-    compose_loss = get_loss(cfg)
-    if not isinstance(compose_loss, ComposeLoss):
-        compose_loss = ComposeLoss(
-            losses=[compose_loss], 
-            coef=[1.0], 
-            indexes=[[0, 0, 0]], 
-            names=["loss"]
-        )
-    return compose_loss
-
-def get_loss(cfg):
-    loss_cfg = copy.deepcopy(cfg)
-    name = loss_cfg.pop("name")
-    assert name in registers.losses, f"{name} not exists!!!"
-    if name != "ComposeLoss":
-        return registers.losses[name](**loss_cfg)
+@registers.evaluator.register
+class ComposeEvaluator:
+    def __init__(self, evals=[], indexes=[[0, 0, 0]], metric_index=0) -> None:
+        self.evals = evals
+        self.indexes = indexes
+        self.metric_index = metric_index
     
-    compose_losses = loss_cfg.pop("losses")
-    losses = [get_loss(l_cfg) for l_cfg in compose_losses]
-    return registers.losses[name](losses, **loss_cfg)
+    def update(self, preds, targets):
+        if not isinstance(preds, list):
+            preds = [preds]
+        if not isinstance(targets, list):
+            targets = [targets]
+
+        for i, j, k in self.indexes:
+            self.evals[i].update(preds[j], targets[k])
+    
+    def evaluate(self):
+        return [self.evals[idx[0]].evaluate() for idx in self.indexes]
+
+    def reset(self):
+        for idx in self.indexes:
+            self.evals[idx[0]].reset()
