@@ -197,8 +197,8 @@ class RandomCrop:
         if random.random() < self.p:
             margin_h = max(H - tH, 0)
             margin_w = max(W - tW, 0)
-            y1 = random.randrange(0, margin_h+1)
-            x1 = random.randrange(0, margin_w+1)
+            y1 = random.randrange(0, margin_h + 1)
+            x1 = random.randrange(0, margin_w + 1)
             y2 = y1 + min(tH, H)
             x2 = x1 + min(tW, W)
             img = img[:, y1:y2, x1:x2]
@@ -272,7 +272,7 @@ class RandomResizedCrop:
         H, W = img.shape[1:]
         s = random.random() * (self.scale[1] - self.scale[0]) + self.scale[0]
         r = random.random() * (self.ratio[1] - self.ratio[0]) + self.ratio[0]
-        crop_h, crop_w = math.sqrt((s * H * W) / r), math.sqrt((s * H * W) * r)
+        crop_h, crop_w = int(math.sqrt((s * H * W) / r)), int(math.sqrt((s * H * W) * r))
         img, mask = RandomCrop((crop_h, crop_w), 1.0)(img, mask)
         return Resize(self.out_size)(img, mask)
     
