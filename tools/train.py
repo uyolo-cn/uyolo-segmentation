@@ -25,7 +25,6 @@
 
 import argparse
 import os
-import warnings
 
 import pytorch_lightning as pl
 import torch
