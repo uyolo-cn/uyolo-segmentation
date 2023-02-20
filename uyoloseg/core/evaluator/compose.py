@@ -23,8 +23,6 @@
 # THIS SOFTWARE IS PROVIDED BY UYOLO, GROUP AND CONTRIBUTORS
 # ===================================================================
 import torch
-from torch import Tensor
-from typing import Tuple, Union
 
 from uyoloseg.utils import registers
 
@@ -46,8 +44,7 @@ class ComposeEvaluator:
             self.evals[i].update(preds[j], targets[k])
     
     def evaluate(self):
-        return [self.evals[idx[0]].evaluate() for idx in self.indexes]
-
-    def reset(self):
+        res = [self.evals[idx[0]].evaluate() for idx in self.indexes]
         for idx in self.indexes:
             self.evals[idx[0]].reset()
+        return res

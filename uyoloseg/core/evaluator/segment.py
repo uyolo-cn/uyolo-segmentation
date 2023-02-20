@@ -80,7 +80,6 @@ class SegmentEvaluator:
         _, eval_results['macc'] = self.metric.compute_pixel_acc()
         _, eval_results['mf1'] = self.metric.compute_f1()
 
-        return eval_results
-
-    def reset(self):
         self.metric.reset()
+
+        return eval_results

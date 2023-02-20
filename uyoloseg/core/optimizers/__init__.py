@@ -24,10 +24,7 @@
 # ===================================================================
 
 import copy
-import logging
-
 import torch
-
 from torch.nn import GroupNorm, LayerNorm
 from torch.nn.modules.batchnorm import _BatchNorm
 

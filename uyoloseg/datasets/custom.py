@@ -68,6 +68,8 @@ class CustomDataset(Dataset):
         image = io.read_image(self.files[index][0].strip())
         label = io.read_image(self.files[index][1].strip())
 
+        assert label.shape[0] == 1, "The number of mask's channel must be 1!!!"
+    
         if self.transform:
             image, label = self.transform(image, label)
         

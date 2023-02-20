@@ -27,7 +27,6 @@ import copy
 from typing import Any, Dict, List
 
 import torch
-import torch.distributed as dist
 from pytorch_lightning import LightningModule
 from pytorch_lightning.utilities import rank_zero_only
 
@@ -143,8 +142,6 @@ class TrainingTask(LightningModule):
                 self.save_model_state(
                     os.path.join(self.cfg.save_dir, 'weights', "model_best_avg.pth")
                 )
-        
-        self.evaluator.reset()
 
         self.logger.log_metrics(all_result, self.current_epoch + 1)
 
