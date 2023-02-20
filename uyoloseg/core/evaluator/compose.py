@@ -45,6 +45,4 @@ class ComposeEvaluator:
     
     def evaluate(self):
         res = [self.evals[idx[0]].evaluate() for idx in self.indexes]
-        for idx in self.indexes:
-            self.evals[idx[0]].reset()
         return res

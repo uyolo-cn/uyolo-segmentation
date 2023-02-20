@@ -33,7 +33,7 @@ from .losses import *
 
 from uyoloseg.utils.register import registers
 
-class FullModel(nn.Module):
+class SegModel(nn.Module):
     def __init__(self, cfg) -> None:
         super().__init__()
         if cfg.network.name in registers.model_hub:
@@ -74,7 +74,7 @@ class FullModel(nn.Module):
 
 
 def build_model(cfg):
-    return FullModel(cfg)
+    return SegModel(cfg)
 
 def build_weight_averager(cfg):
     pass
