@@ -46,6 +46,7 @@ python tools/train.py --cfg ${config_file}
 # <img src="./docs/assets/acknowledgement_ico.png" width="30"/> Acknowledgement
 
 - https://github.com/PaddlePaddle/PaddleSeg
+- https://github.com/open-mmlab/mmsegmentation
 - https://github.com/sithu31296/semantic-segmentation
 - https://github.com/RangiLyu/nanodet
 - https://github.com/Lightning-AI/lightning
