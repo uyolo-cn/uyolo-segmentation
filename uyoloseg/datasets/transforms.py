@@ -259,7 +259,7 @@ class RandomResizedCrop:
     def __init__(self, size: Union[int, Tuple[int], List[int]], scale: Tuple[float] = (0.5, 1.0), ratio: Tuple[float] = (0.75, 4.0 / 3.0)) -> None:
         """
         Crop a random portion of image and resize it to a given size.
-        If the image is torch Tensor, it is expected to have `[…, H, W]` shape, where `…` means an arbitrary number of leading dimensions
+        If the image is torch Tensor, it is expected to have `[..., H, W]` shape, where `...` means an arbitrary number of leading dimensions
         A crop of the original image is made: the crop has a random area (h * w) and a random aspect ratio. 
         This crop is finally resized to the given size. 
         This is popularly used to train the Inception networks.
@@ -286,17 +286,20 @@ class SimpleCopyPaste:
         if random.random() < self.prob:
             for idx in self.label_index:
                 valid = (mask == idx)
-                if valid.any():
+                if not valid.any():
+                    continue
+                for i in range(4):
                     cx1, cy1 = random.random() * 3 / 4 * H, random.random() * 3 / 4 * W
                     valid = valid[:, int(cx1):int(cx1 + H / 4.0), int(cy1):int(cy1 + W / 4.0)]
-                    if valid.any():
-                        copy_img = img[:, int(cx1):int(cx1 + H / 4.0), int(cy1):int(cy1 + W / 4.0)] * valid
-                        copy_mask = mask[:, int(cx1):int(cx1 + H / 4.0), int(cy1):int(cy1 + W / 4.0)] * valid
-                        px1, py1 = random.random() * 3 / 4 * H, random.random() * 3 / 4 * W
-                        img[:, int(px1):int(px1 + H / 4.0), int(py1):int(py1 + W / 4.0)] *= (~valid)
-                        img[:, int(px1):int(px1 + H / 4.0), int(py1):int(py1 + W / 4.0)] += copy_img
-                        mask[:, int(px1):int(px1 + H / 4.0), int(py1):int(py1 + W / 4.0)] *= (~valid)
-                        mask[:, int(px1):int(px1 + H / 4.0), int(py1):int(py1 + W / 4.0)] += copy_mask
+                    if not valid.any():
+                        continue
+                    copy_img = img[:, int(cx1):int(cx1 + H / 4.0), int(cy1):int(cy1 + W / 4.0)] * valid
+                    copy_mask = mask[:, int(cx1):int(cx1 + H / 4.0), int(cy1):int(cy1 + W / 4.0)] * valid
+                    px1, py1 = random.random() * 3 / 4 * H, random.random() * 3 / 4 * W
+                    img[:, int(px1):int(px1 + H / 4.0), int(py1):int(py1 + W / 4.0)] *= (~valid)
+                    img[:, int(px1):int(px1 + H / 4.0), int(py1):int(py1 + W / 4.0)] += copy_img
+                    mask[:, int(px1):int(px1 + H / 4.0), int(py1):int(py1 + W / 4.0)] *= (~valid)
+                    mask[:, int(px1):int(px1 + H / 4.0), int(py1):int(py1 + W / 4.0)] += copy_mask
         return img, mask
 
 

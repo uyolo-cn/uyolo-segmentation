@@ -26,7 +26,7 @@
 def file2list(path, line_split=','):
     with open(path) as f:
         lines = f.readlines()
-    return [line.split(line_split).strip() for line in lines]
+    return [line.strip().split(line_split) for line in lines]
 
 if __name__ == '__main__':
     print(file2list('/project/a.txt'))
