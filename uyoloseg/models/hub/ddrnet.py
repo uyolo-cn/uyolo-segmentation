@@ -83,12 +83,12 @@ class BottleNeck(nn.Module):
             return self.relu(out)
 
 class DAPPMBlock(nn.Sequential):
-    def __init__(self, c1, c2, k=1, s=1, p=0, with_pool=True, adaptive=False):
+    def __init__(self, c1, c2, k=1, s=1, p=0, g=1, d=1, with_pool=True, adaptive=False):
         super().__init__(
             nn.AdaptiveAvgPool2d(k) if adaptive else nn.AvgPool2d(k, s, p) if with_pool else nn.Identity(),
             nn.BatchNorm2d(c1),
             nn.ReLU(inplace=True),
-            nn.Conv2d(c1, c2, 1, bias=False) if with_pool else nn.Conv2d(c1, c2, k, s, p, bias=False)
+            nn.Conv2d(c1, c2, 1, bias=False) if with_pool else nn.Conv2d(c1, c2, k, s, p, g, d, bias=False)
         )
 
 class DAPPM(nn.Module):
@@ -166,10 +166,12 @@ class DualResNet(nn.Module):
         self.layer2 = self._make_layer(BasicBlock, planes, planes * 2, layers[1], stride=2)
         self.layer3 = self._make_layer(BasicBlock, planes * 2, planes * 4, layers[2], stride=2)
         self.layer4 = self._make_layer(BasicBlock, planes * 4, planes * 8, layers[3], stride=2)
+        self.layer5 =  self._make_layer(BottleNeck, planes * 8, planes * 8, 1, stride=2)
+        
         self.layer3_ = self._make_layer(BasicBlock, planes * 2, planes * 2, 2)
         self.layer4_ = self._make_layer(BasicBlock, planes * 2, planes * 2, 2)
         self.layer5_ = self._make_layer(BottleNeck, planes * 2, planes * 2, 1)
-        self.layer5 =  self._make_layer(BottleNeck, planes * 8, planes * 8, 1, stride=2)
+        
 
         self.compression3 = nn.Sequential(
             nn.Conv2d(planes * 4, planes * 2, kernel_size=1, bias=False),
