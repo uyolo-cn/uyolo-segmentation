@@ -49,3 +49,15 @@ class ConvBN(nn.Module):
 
     def forward_fuse(self, x):
         return self.act(self.conv(x))
+    
+class DwConvBN(nn.Module):
+    """
+    Depth wise ConvBN
+    """
+    def __init__(self, c1, c2, k=1, s=1, p=None, d=1, act=False, bias=False) -> None:
+        super().__init__()
+        self.depthwise_conv = ConvBN(self, c1, c2, k=k, s=s, p=p, g=c1, d=d, act=act, bias=bias)
+
+    def forward(self, x):
+        x = self.depthwise_conv(x)
+        return x
