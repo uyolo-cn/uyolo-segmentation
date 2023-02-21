@@ -23,4 +23,4 @@
 # THIS SOFTWARE IS PROVIDED BY UYOLO, GROUP AND CONTRIBUTORS
 # ===================================================================
 
-from .ddrnet import DDRNet23, DDRNet23_slim
+from .ddrnet import DDRNet23, DDRNet23_slim, BasicBlock, BottleNeck, DAPPM, DAPPMBlock, SegmentHead

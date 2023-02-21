@@ -83,12 +83,12 @@ class BottleNeck(nn.Module):
             return self.relu(out)
 
 class DAPPMBlock(nn.Sequential):
-    def __init__(self, c1, c2, k=1, s=1, p=0, g=1, d=1, with_pool=True, adaptive=False):
+    def __init__(self, c1, c2, k=1, s=1, p=0, d=1, g=1, with_pool=True, adaptive=False):
         super().__init__(
             nn.AdaptiveAvgPool2d(k) if adaptive else nn.AvgPool2d(k, s, p) if with_pool else nn.Identity(),
             nn.BatchNorm2d(c1),
             nn.ReLU(inplace=True),
-            nn.Conv2d(c1, c2, 1, bias=False) if with_pool else nn.Conv2d(c1, c2, k, s, p, g, d, bias=False)
+            nn.Conv2d(c1, c2, 1, bias=False) if with_pool else nn.Conv2d(c1, c2, k, s, p, d, g, bias=False)
         )
 
 class DAPPM(nn.Module):

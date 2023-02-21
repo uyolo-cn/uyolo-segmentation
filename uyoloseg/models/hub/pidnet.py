@@ -28,9 +28,8 @@ import torch.nn as nn
 from torch.nn import functional as F
 
 from uyoloseg.models.modules import ConvBN
+from uyoloseg.models.hub import BasicBlock, BottleNeck, DAPPM, DAPPMBlock, SegmentHead
 from uyoloseg.utils.register import registers
-
-from .ddrnet import BasicBlock, BottleNeck, DAPPM, DAPPMBlock, SegmentHead
 
 class PAPPM(nn.Module):
     def __init__(self, inplanes, branch_planes, outplanes):
@@ -87,9 +86,9 @@ class PagFM(nn.Module):
             )
         self.relu = nn.ReLU(inplace=True)
 
-    def forward(self):
+    def forward(self, x, y):
         input_size = x.size()
-        if self.after_relu:
+        if self.with_relu:
             y = self.relu(y)
             x = self.relu(x)
         
@@ -160,7 +159,7 @@ class PIDNet(nn.Module):
         # P Branch
         self.compression3 = nn.Sequential(
             nn.Conv2d(planes * 4, planes * 2, kernel_size=1, bias=False),
-            nn.BatchNorm2d(planes * 2),
+            nn.BatchNorm2d(planes * 2)
         )
 
         self.compression4 = nn.Sequential(

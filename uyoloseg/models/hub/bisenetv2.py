@@ -93,17 +93,17 @@ class StemBlock(nn.Module):
 class ContextEmbeddingBlock(nn.Module):
     def __init__(self, in_dim=128, out_dim=128):
         super().__init__()
-        self.gap = nn.AdaptiveAvgPool2d((1, 1))
+        self.gap = nn.AdaptiveAvgPool2d(1)
         self.bn = nn.BatchNorm2d(in_dim)
         self.conv_gap = ConvBN(in_dim, out_dim, 1)
-        self.conv_last = nn.Conv2d(out_dim, out_dim, 3)
+        self.conv_last = nn.Conv2d(out_dim, out_dim, 3, padding=1)
 
     def forward(self, x):
         feat = self.bn(self.gap(x))
         feat = self.conv_gap(feat) + x
         return self.conv_last(feat)
     
-class GatherAndExpansionLayer1(nn.Layer):
+class GatherAndExpansionLayer1(nn.Module):
     """Gather And Expansion Layer with stride 1"""
     def __init__(self, in_dim, out_dim, expand):
         super().__init__()
@@ -117,7 +117,7 @@ class GatherAndExpansionLayer1(nn.Layer):
     def forward(self, x):
         return self.relu(self.conv(x) + x)
     
-class GatherAndExpansionLayer2(nn.Layer):
+class GatherAndExpansionLayer2(nn.Module):
     """Gather And Expansion Layer with stride 2"""
 
     def __init__(self, in_dim, out_dim, expand):
@@ -127,13 +127,12 @@ class GatherAndExpansionLayer2(nn.Layer):
 
         self.branch_1 = nn.Sequential(
             ConvBN(in_dim, in_dim, 3),
-            DwConvBN(in_dim, expand_dim, 3, stride=2),
+            DwConvBN(in_dim, expand_dim, 3, s=2),
             DwConvBN(expand_dim, expand_dim, 3),
             ConvBN(expand_dim, out_dim, 1, act=False))
 
         self.branch_2 = nn.Sequential(
-            DwConvBN(
-                in_dim, in_dim, 3, stride=2),
+            DwConvBN(in_dim, in_dim, 3, s=2),
             ConvBN(in_dim, out_dim, 1, act=False))
 
         self.relu = nn.ReLU(inplace=True)
@@ -141,7 +140,7 @@ class GatherAndExpansionLayer2(nn.Layer):
     def forward(self, x):
         return self.relu(self.branch_1(x) + self.branch_2(x))
     
-class SemanticBranch(nn.Layer):
+class SemanticBranch(nn.Module):
     """The semantic branch of BiSeNet, which has narrow channels but deep layers."""
 
     def __init__(self, in_channels, feature_channels):
@@ -167,6 +166,7 @@ class SemanticBranch(nn.Layer):
         self.ce = ContextEmbeddingBlock(c5, c5)
 
     def forward(self, x):
+        
         stage1_2 = self.stage1_2(x)
         stage3 = self.stage3(stage1_2)
         stage4 = self.stage4(stage3)
@@ -174,7 +174,7 @@ class SemanticBranch(nn.Layer):
         fm = self.ce(stage5_4)
         return stage1_2, stage3, stage4, stage5_4, fm
     
-class BGA(nn.Layer):
+class BGA(nn.Module):
     """The Bilateral Guided Aggregation Layer, used to fuse the semantic features and spatial features."""
 
     def __init__(self, out_dim, align_corners=False):
@@ -187,7 +187,7 @@ class BGA(nn.Layer):
             nn.Conv2d(out_dim, out_dim, 1))
 
         self.db_branch_down = nn.Sequential(
-            ConvBN(out_dim, out_dim, 3, stride=2, act=False),
+            ConvBN(out_dim, out_dim, 3, s=2, act=False),
             nn.AvgPool2d(kernel_size=3, stride=2, padding=1))
 
         self.sb_branch_keep = nn.Sequential(
@@ -212,7 +212,7 @@ class BGA(nn.Layer):
             mode='bilinear',
             align_corners=self.align_corners)
 
-        sb_feat_up = F.sigmoid(sb_feat_up)
+        sb_feat_up = torch.sigmoid(sb_feat_up)
         db_feat = db_feat_keep * sb_feat_up
 
         sb_feat = db_feat_down * sb_feat_keep

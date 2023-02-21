@@ -2,7 +2,7 @@ matplotlib
 numpy
 omegaconf>=2.0.1
 onnx
-onnx-simplifier
+onnx-simplifier>=0.4.1
 opencv-python
 pyaml
 pytorch-lightning>=1.9.0
