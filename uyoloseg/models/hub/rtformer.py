@@ -75,8 +75,9 @@ class FFN(nn.Module):
 
         return self.drop(self.conv2(x))
     
-class ExternalAttention:
+class ExternalAttention(nn.Module):
     def __init__(self, c1, c2, c3, num_heads=8, use_cross_kv=False) -> None:
+        super().__init__()
         assert c3 % num_heads == 0, "out_channels ({}) should be be a multiple of num_heads ({})".format(c3, num_heads)
         self.c1 = c1
         self.c2 = c2
@@ -87,8 +88,8 @@ class ExternalAttention:
         if use_cross_kv:
             assert c1 == c3, "in_channels is not equal to out_channels when use_cross_kv is True"
         else:
-            self.k = nn.Parameter(torch.normal(std=0.001, size=(c2, c1, 1, 1)), requires_grad=True)
-            self.v = nn.Parameter(torch.normal(std=0.001, size=(c3, c2, 1, 1)), requires_grad=True)
+            self.k = nn.Parameter(torch.normal(0, 0.001, size=(c2, c1, 1, 1)), requires_grad=True)
+            self.v = nn.Parameter(torch.normal(0, 0.001, size=(c3, c2, 1, 1)), requires_grad=True)
 
     def _act_sn(self, x):
         _, _, h, w = x.shape
@@ -124,6 +125,8 @@ class ExternalAttention:
             x = self._act_sn(x)
             x = F.conv2d(x, cross_v, bias=None, groups=n)
             x = x.reshape([n, -1, h, w])
+        
+        return x
 
 class EABlock(nn.Module):
     def __init__(self, c1s, c2s, num_heads=8, 
@@ -150,7 +153,7 @@ class EABlock(nn.Module):
         self.attn_l = ExternalAttention(
             c1_l,
             c2_l,
-            inter_channels=c2_l,
+            c2_l,
             num_heads=num_heads,
             use_cross_kv=False
         )
@@ -159,13 +162,13 @@ class EABlock(nn.Module):
 
         self.drop_path = DropPath(drop_path_rate) if drop_path_rate > 0. else nn.Identity()
 
-        self.compression = BNConv(c2_l, c2_l, 1)
+        self.compression = BNConv(c2_l, c2_h, 1)
 
         # high resolution
         self.attn_h = ExternalAttention(
             c1_h,
+            cross_size*cross_size,
             c1_h,
-            inter_channels=cross_size*cross_size,
             num_heads=num_heads,
             use_cross_kv=use_cross_kv
         )
@@ -203,9 +206,9 @@ class EABlock(nn.Module):
             x_h = x_h + self.drop_path(self.attn_h(x_h))  # n,out_chs_h,h,w
         else:
             cross_kv = self.cross_kv(x_l)  # n,2*out_channels_h,12,12
-            cross_k, cross_v = torch.split(cross_kv, 2, dim=1)
+            cross_k, cross_v = torch.split(cross_kv, cross_kv.shape[1] // 2, dim=1)
             cross_k = cross_k.permute([0, 2, 3, 1]).reshape(
-                [-1, self.out_channels_h, 1, 1])  # n*144,out_channels_h,1,1
+                [-1, self.c2_h, 1, 1])  # n*144,out_channels_h,1,1
             cross_v = cross_v.reshape(
                 [-1, self.cross_size * self.cross_size, 1,1])  # n*out_channels_h,144,1,1
             x_h = x_h + \
@@ -222,7 +225,7 @@ class EABlock(nn.Module):
 class RTFormer(nn.Module):
     def __init__(self, output_dim=19, layers=[2, 2, 2, 2], in_planes=3, planes=64, 
                  spp_planes=128, head_planes=128, num_heads=8, drop_rate=0., drop_path_rate=0.2, 
-                 injection=[True, True], cross_size=12, augment=False) -> None:
+                 injection=[True, True], cross_size=12, augment=True) -> None:
         super().__init__()
         
         self.augment = augment
@@ -327,6 +330,7 @@ def RTFormer_slim(**kargs):
         
 if __name__ == '__main__':
     model = RTFormer()
+    model.train()
     x = torch.zeros(2, 3, 224, 224)
     outs = model(x)
     for y in outs:

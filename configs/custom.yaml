@@ -5,7 +5,7 @@ device:
   batchsize_per_gpu: 32
   precision: 16
 
-save_dir: './exp'
+save_dir: /project/exp
 
 # Model
 model:
@@ -13,7 +13,7 @@ model:
     name: DDRNet23_slim
     output_dim: 2
     augment: True
-    pretrained: /project/DDRNet23s_imagenet.pth
+    pretrained: /project/model_hub/DDRNet/DDRNet23s_imagenet.pth
   loss:
     name: ComposeLoss
     losses: 

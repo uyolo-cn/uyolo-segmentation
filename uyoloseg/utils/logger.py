@@ -34,9 +34,9 @@ from pytorch_lightning.utilities import rank_zero_only
 from termcolor import colored
 
 class UYOLOLightningLogger(LightningLoggerBase):
+    _name = "uyoloseg"
     def __init__(self, save_dir="./", **kwargs):
         super().__init__()
-        self._name = "uyoloseg"
         self._version = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
         self._save_dir = os.path.join(save_dir, f"logs-{self._version}")
 

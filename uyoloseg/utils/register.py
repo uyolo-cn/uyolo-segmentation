@@ -80,11 +80,11 @@ class Register:
         return self._dict.keys()
     
 class registers():  # pylint: disable=invalid-name, too-few-public-methods
-  """All module registers."""
+    """All module registers."""
 
-  def __init__(self):
-    raise RuntimeError("Registries is not intended to be instantiated")
+    def __init__(self):
+        raise RuntimeError("Registries is not intended to be instantiated")
 
-  model_hub = Register('model_hub')
-  losses = Register('losses')
-  evaluator = Register('evaluator')
+    model_hub = Register('model_hub')
+    losses = Register('losses')
+    evaluator = Register('evaluator')

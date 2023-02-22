@@ -25,11 +25,7 @@
 
 import torch
 import torch.nn as nn
-from torch import Tensor
 import copy
-
-from .hub import *
-from .losses import *
 
 from uyoloseg.utils.register import registers
 
@@ -51,7 +47,7 @@ class SegModel(nn.Module):
             if model_path:
                 state_dict = torch.load(model_path)
                 model_dict = self.model.state_dict()
-                pretrained_state = {k[6:]: v for k, v in state_dict.items() if (k[6:] in model_dict and v.shape == model_dict[k[6:]].shape)}
+                pretrained_state = {k: v for k, v in state_dict.items() if (k in model_dict and v.shape == model_dict[k].shape)}
                 model_dict.update(pretrained_state)
                 self.model.load_state_dict(model_dict, strict=False)
         else:
@@ -72,9 +68,31 @@ class SegModel(nn.Module):
         
         return logit, loss, loss_states
 
-
 def build_model(cfg):
     return SegModel(cfg)
 
 def build_weight_averager(cfg):
     pass
+
+def build_loss(cfg):
+    compose_loss = get_loss(cfg)
+    ComposeLoss = registers.losses["ComposeLoss"]
+    if not isinstance(compose_loss, ComposeLoss):
+        compose_loss = ComposeLoss(
+            losses=[compose_loss], 
+            coef=[1.0], 
+            indexes=[[0, 0, 0]], 
+            names=["loss"]
+        )
+    return compose_loss
+
+def get_loss(cfg):
+    loss_cfg = copy.deepcopy(cfg)
+    name = loss_cfg.pop("name")
+    assert name in registers.losses, f"{name} not exists!!!"
+    if name != "ComposeLoss":
+        return registers.losses[name](**loss_cfg)
+    
+    compose_losses = loss_cfg.pop("losses")
+    losses = [get_loss(l_cfg) for l_cfg in compose_losses]
+    return registers.losses[name](losses, **loss_cfg)

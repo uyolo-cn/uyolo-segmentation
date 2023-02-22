@@ -23,9 +23,11 @@
 # THIS SOFTWARE IS PROVIDED BY UYOLO, GROUP AND CONTRIBUTORS
 # ===================================================================
 import torch
+import logging
 
-from uyoloseg.utils import registers
+from uyoloseg.utils import registers, UYOLOLightningLogger
 
+logger = logging.getLogger(UYOLOLightningLogger._name)
 
 @registers.evaluator.register
 class ComposeEvaluator:
@@ -44,5 +46,13 @@ class ComposeEvaluator:
             self.evals[i].update(preds[j], targets[k])
     
     def evaluate(self):
-        res = [self.evals[idx[0]].evaluate() for idx in self.indexes]
+        res = [ ]
+        msg = ''
+        
+        for idx in self.indexes:
+            re, table = self.evals[idx[0]].evaluate()
+            res.append(re)
+            msg += '\n' + f'Output {idx[0]} evaluation result:' + '\n' + table
+        
+        logger.info(msg)
         return res
