@@ -50,6 +50,17 @@ class ConvBN(nn.Module):
     def forward_fuse(self, x):
         return self.act(self.conv(x))
     
+class BNConv(ConvBN):
+    def __init__(self, c1, c2, k=1, s=1, p=None, g=1, d=1, act=True, bias=False) -> None:
+        super().__init__(c1, c2, k, s, p, g, d, act, bias)
+        self.bn = nn.BatchNorm2d(c1)
+
+    def forward(self, x):
+        return self.conv(self.act(self.bn(x)))
+
+    def forward_fuse(self, x):
+        return self.conv(self.act(x))
+    
 class DwConvBN(nn.Module):
     """
     Depth wise ConvBN

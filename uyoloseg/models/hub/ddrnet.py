@@ -150,13 +150,13 @@ class SegmentHead(nn.Module):
         return out
 
 class DualResNet(nn.Module):
-    def __init__(self, output_dim=19, layers=[2, 2, 2, 2], planes=64, spp_planes=128, head_planes=128, augment=False):
+    def __init__(self, output_dim=19, layers=[2, 2, 2, 2], in_planes=3, planes=64, spp_planes=128, head_planes=128, augment=False):
         super().__init__()
         
         self.augment = augment
 
         self.conv1 = nn.Sequential(
-            ConvBN(3, planes, 3, 2, bias=True),
+            ConvBN(in_planes, planes, 3, 2, bias=True),
             ConvBN(planes, planes, 3, 2, bias=True)
         )
 

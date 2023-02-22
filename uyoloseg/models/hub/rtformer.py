@@ -28,7 +28,7 @@ import torch.nn as nn
 from torch import Tensor
 from torch.nn import functional as F
 
-from uyoloseg.models.modules import ConvBN
+from uyoloseg.models.modules import ConvBN, BNConv
 from uyoloseg.models.hub import BasicBlock, DAPPM, DAPPMBlock, SegmentHead
 from uyoloseg.utils.register import registers
 
@@ -159,11 +159,7 @@ class EABlock(nn.Module):
 
         self.drop_path = DropPath(drop_path_rate) if drop_path_rate > 0. else nn.Identity()
 
-        self.compression = nn.Sequential(
-            nn.BatchNorm2d(c2_l),
-            nn.ReLU(),
-            nn.Conv2d(c2_l, c2_l, 1)
-        )
+        self.compression = BNConv(c2_l, c2_l, 1)
 
         # high resolution
         self.attn_h = ExternalAttention(
@@ -186,12 +182,8 @@ class EABlock(nn.Module):
         # injection
         if use_injection:
             self.down = nn.Sequential(
-                nn.BatchNorm2d(c2_h),
-                nn.ReLU(),
-                nn.Conv2d(c2_h, c2_l // 2, 3, 2, 1),
-                nn.BatchNorm2d(c2_l // 2),
-                nn.ReLU(),
-                nn.Conv2d(c2_l // 2, c2_l, 3, 2, 1)
+                BNConv(c2_h, c2_l // 2, 3, 2),
+                BNConv(c2_l // 2, c2_l, 3, 2)
             )
     def forward(self, x):
         x_h, x_l = x
@@ -226,3 +218,116 @@ class EABlock(nn.Module):
             x_l = x_l + self.down(x_h)
 
         return x_h, x_l
+    
+class RTFormer(nn.Module):
+    def __init__(self, output_dim=19, layers=[2, 2, 2, 2], in_planes=3, planes=64, 
+                 spp_planes=128, head_planes=128, num_heads=8, drop_rate=0., drop_path_rate=0.2, 
+                 injection=[True, True], cross_size=12, augment=False) -> None:
+        super().__init__()
+        
+        self.augment = augment
+
+        self.conv1 = nn.Sequential(
+            ConvBN(in_planes, planes, 3, 2, bias=True),
+            ConvBN(planes, planes, 3, 2, bias=True)
+        )
+
+        self.relu = nn.ReLU(inplace=False)
+
+        self.layer1 = self._make_layer(BasicBlock, planes, planes, layers[0])
+        self.layer2 = self._make_layer(BasicBlock, planes, planes * 2, layers[1], stride=2)
+        self.layer3 = self._make_layer(BasicBlock, planes * 2, planes * 4, layers[2], stride=2)
+        self.layer3_ = self._make_layer(BasicBlock, planes * 2, planes * 2, 1)
+
+        self.compression3 = ConvBN(planes * 4, planes * 2, 1)
+
+        self.layer4 = EABlock(
+            c1s=[planes * 2, planes * 4],
+            c2s=[planes * 2, planes * 8],
+            num_heads=num_heads,
+            drop_rate=drop_rate,
+            drop_path_rate=drop_path_rate,
+            use_injection=injection[0],
+            use_cross_kv=True,
+            cross_size=cross_size)
+        self.layer5 = EABlock(
+            c1s=[planes * 2, planes * 8],
+            c2s=[planes * 2, planes * 8],
+            num_heads=num_heads,
+            drop_rate=drop_rate,
+            drop_path_rate=drop_path_rate,
+            use_injection=injection[1],
+            use_cross_kv=True,
+            cross_size=cross_size)
+        
+        self.spp = DAPPM(planes * 8, spp_planes, planes * 2)
+
+        if self.augment:
+            self.seghead_extra = SegmentHead(planes * 2, head_planes, output_dim)            
+
+        self.seghead = SegmentHead(planes * 4, head_planes * 2, output_dim)
+
+    def _make_layer(self, block_class, inplanes, planes, blocks, stride=1):
+        downsample = None
+        if stride != 1 or inplanes != planes * block_class.expansion:
+            downsample = ConvBN(inplanes, planes * block_class.expansion, 1, stride, act=False)
+
+        layers = []
+        layers.append(block_class(inplanes, planes, stride, downsample))
+        inplanes = planes * block_class.expansion
+        for i in range(1, blocks):
+            if i == (blocks-1):
+                layers.append(block_class(inplanes, planes, s=1, no_relu=True))
+            else:
+                layers.append(block_class(inplanes, planes, s=1, no_relu=False))
+
+        return nn.Sequential(*layers)
+    
+    def forward(self, x):
+        x1 = self.layer1(self.conv1(x))  # c, 1/4
+        x2 = self.layer2(self.relu(x1))  # 2c, 1/8
+        x3 = self.layer3(self.relu(x2))  # 4c, 1/16
+        x3_ = x2 + F.interpolate(
+            self.compression3(x3), size=x2.shape[2:], mode='bilinear')
+        x3_ = self.layer3_(self.relu(x3_))  # 2c, 1/8
+
+        x4_, x4 = self.layer4(
+            [self.relu(x3_), self.relu(x3)])  # 2c, 1/8; 8c, 1/16
+        x5_, x5 = self.layer5(
+            [self.relu(x4_), self.relu(x4)])  # 2c, 1/8; 8c, 1/32
+
+        x6 = self.spp(x5)
+        x6 = F.interpolate(
+            x6, size=x5_.shape[2:], mode='bilinear')  # 2c, 1/8
+        x_out = self.seghead(torch.concat([x5_, x6], dim=1))  # 4c, 1/8
+        logit_list = [x_out]
+
+        if self.training and self.augment:
+            x_out_extra = self.seghead_extra(x3_)
+            logit_list.append(x_out_extra)
+
+        logit_list = [
+            F.interpolate(
+                logit,
+                x.shape[2:],
+                mode='bilinear',
+                align_corners=False) for logit in logit_list
+        ]
+
+        return logit_list
+    
+@registers.model_hub.register
+def RTFormer_base(**kargs):
+    return RTFormer(**kargs)
+
+@registers.model_hub.register
+def RTFormer_slim(**kargs):
+    return RTFormer(planes=32, head_planes=64, **kargs)
+
+        
+if __name__ == '__main__':
+    model = RTFormer()
+    x = torch.zeros(2, 3, 224, 224)
+    outs = model(x)
+    for y in outs:
+        print(y.shape)

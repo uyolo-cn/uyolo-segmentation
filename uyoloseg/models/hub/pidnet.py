@@ -138,13 +138,13 @@ class Bag(nn.Module):
         return self.conv(edge_att * p + (1 - edge_att) * i)
 
 class PIDNet(nn.Module):
-    def __init__(self, m=2, n=3, num_classes=19, planes=64, ppm_planes=96, head_planes=128, augment=True):
+    def __init__(self, m=2, n=3, num_classes=19, in_planes=3, planes=64, ppm_planes=96, head_planes=128, augment=True):
         super().__init__()
         self.augment = augment
         
         # I Branch
         self.conv1 = nn.Sequential(
-            ConvBN(3, planes, 3, 2, bias=True),
+            ConvBN(in_planes, planes, 3, 2, bias=True),
             ConvBN(planes, planes, 3, 2, bias=True)
         )
 
