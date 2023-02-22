@@ -25,8 +25,9 @@
 
 import argparse
 
-import pytorch_lightning as pl
 import torch
+import pytorch_lightning as pl
+from pytorch_lightning.callbacks import TQDMProgressBar
 
 from uyoloseg.datasets import build_dataset, naive_collate
 from uyoloseg.utils import cfg, update_config, UYOLOLightningLogger, import_all_modules_for_register
@@ -37,8 +38,12 @@ def parse_args():
     parser.add_argument("--cfg", default='configs/custom.yaml', type=str, help="train config file path")
     parser.add_argument("--model", type=str, help="ckeckpoint file(.ckpt) path")
     parser.add_argument("--seed", type=int, default=304, help="random seed")
+    parser.add_argument('opts',
+                        help="Modify config options using the command-line",
+                        default=None,
+                        nargs=argparse.REMAINDER)
     args = parser.parse_args()
-    update_config(cfg, args)
+    update_config(args)
     return args
 
 def main():
@@ -77,11 +82,11 @@ def main():
     ckpt = torch.load(args.model)
     task.load_state_dict(ckpt["state_dict"])
 
-    if cfg.device.gpu_ids == -1:
+    if cfg.device.gpus == -1:
         logger.info("Using CPU training")
         accelerator, devices = "cpu", None
     else:
-        accelerator, devices = "gpu", cfg.device.gpu_ids
+        accelerator, devices = "gpu", cfg.device.gpus
 
     trainer = pl.Trainer(
         default_root_dir=cfg.save_dir,
@@ -90,6 +95,7 @@ def main():
         log_every_n_steps=cfg.log.interval,
         num_sanity_val_steps=0,
         logger=logger,
+        callbacks=[TQDMProgressBar(refresh_rate=0)],  # disable tqdm bar
     )
 
     logger.info("Starting testing...")

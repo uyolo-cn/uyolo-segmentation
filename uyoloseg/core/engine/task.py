@@ -145,6 +145,25 @@ class TrainingTask(LightningModule):
 
         self.logger.log_metrics(all_result, self.current_epoch + 1)
 
+    def test_step(self, batch, batch_idx):
+        preds = self(batch)
+        self.evaluator.update(preds, batch['mask'])
+
+        if batch_idx % self.cfg.log.interval == 0:
+            memory = (
+                torch.cuda.memory_reserved() / 1e9 if torch.cuda.is_available() else 0
+            )
+            log_msg = "Test|Iter{}/{}|mem:{:.3g}G".format(
+                batch_idx + 1,
+                sum(self.trainer.num_test_batches),
+                memory
+            )
+            self.logger.info(log_msg)
+        return None
+
+    def test_epoch_end(self, test_step_outputs):
+        self.evaluator.evaluate()
+
     def configure_optimizers(self):
         """
         Prepare optimizer and learning-rate scheduler
@@ -230,7 +249,7 @@ class TrainingTask(LightningModule):
         )
         torch.save({"state_dict": state_dict}, path)
 
-
+    # hooks
     def on_fit_start(self) -> None:
         if "weight_averager" in self.cfg.model:
             self.logger.info("Weight Averaging is enabled")

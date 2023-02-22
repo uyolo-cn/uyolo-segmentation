@@ -56,7 +56,7 @@ cfg.evaluator = CfgNode(new_allowed=True)
 cfg.log = CfgNode()
 cfg.log.interval = 50
 
-def update_config(cfg, args):
+def update_config(args):
     cfg.defrost()
     
     cfg.merge_from_file(args.cfg)

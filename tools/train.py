@@ -46,7 +46,7 @@ def parse_args():
                         default=None,
                         nargs=argparse.REMAINDER)
     args = parser.parse_args()
-    update_config(cfg, args)
+    update_config(args)
     return args
 
 def main():
