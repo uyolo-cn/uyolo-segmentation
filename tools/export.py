@@ -34,7 +34,7 @@ from uyoloseg.models import build_model
 from uyoloseg.utils import cfg, update_config, UYOLOLightningLogger, import_all_modules_for_register
 
 """
-python tools/export.py --model /project/expressage/weights/model_best_avg.pth --out_path /project/expressage/weights/model_best.onnx --input_shape 576 1024
+python tools/export.py --model /project/custom/weights/model_best_avg.pth --out_path /project/custom/weights/model_best.onnx --input_shape 576 1024
 """
 
 def parse_args():
