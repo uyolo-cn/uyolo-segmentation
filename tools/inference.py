@@ -54,6 +54,6 @@ class Predictor:
         }
 
         with torch.no_grad():
-            result = self.model(meta)
+            result = self.model(meta['img'])
         
         return result

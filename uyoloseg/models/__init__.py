@@ -55,8 +55,8 @@ class SegModel(nn.Module):
 
         self.loss_func = build_loss(cfg.loss)
 
-    def forward(self, batch):
-        return self.model(batch['img'])
+    def forward(self, x):
+        return self.model(x)
 
     def forward_train(self, batch):
         logit = self.model(batch['img'])

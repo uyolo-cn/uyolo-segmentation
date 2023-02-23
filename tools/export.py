@@ -33,11 +33,15 @@ import onnxsim
 from uyoloseg.models import build_model
 from uyoloseg.utils import cfg, update_config, UYOLOLightningLogger, import_all_modules_for_register
 
+"""
+python tools/export.py --model /project/expressage/weights/model_best_avg.pth --out_path /project/expressage/weights/model_best.onnx --input_shape 576 1024
+"""
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--cfg", default='configs/custom.yaml', type=str, help="train config file path")
     parser.add_argument("--model", type=str, help="model file(.pth) path")
-    parser.add_argument("--include", type=str, nargs='*', help="onnx | openvino | etc.")
+    parser.add_argument("--include", type=str, default='onnx', nargs='*', help="onnx | openvino | etc.")
     parser.add_argument(
         "--out_path", type=str, default="ddrnet23_slim.onnx", help="Onnx model output path."
     )
@@ -70,14 +74,14 @@ def main():
 
     dummy_input = torch.autograd.Variable(
         torch.randn(1, 3, args.input_shape[0], args.input_shape[1])
-    )
+    ).to(device)
 
     if 'onnx' in args.include:
         torch.onnx.export(
             model,
             dummy_input,
-            args.output_path,
-            verbose=True,
+            args.out_path,
+            verbose=False,
             keep_initializers_as_inputs=True,
             opset_version=11,
             input_names=["data"],
@@ -87,9 +91,9 @@ def main():
 
         logger.log("Start simplifying onnx ")
         input_data = {"data": dummy_input.detach().cpu().numpy()}
-        model_sim, flag = onnxsim.simplify(args.output_path, input_data=input_data)
+        model_sim, flag = onnxsim.simplify(args.out_path, input_data=input_data)
         if flag:
-            onnx.save(model_sim, args.output_path)
+            onnx.save(model_sim, args.out_path)
             logger.log("Simplify onnx successfully")
         else:
             logger.log("Simplify onnx failed")

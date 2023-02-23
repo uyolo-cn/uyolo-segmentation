@@ -61,7 +61,7 @@ def update_config(args):
     
     if args.cfg:
         cfg.merge_from_file(args.cfg)
-    if args.opt:
+    if args.opts:
         cfg.merge_from_list(args.opts)
 
     cfg.freeze()
