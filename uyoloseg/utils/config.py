@@ -59,8 +59,10 @@ cfg.log.interval = 50
 def update_config(args):
     cfg.defrost()
     
-    cfg.merge_from_file(args.cfg)
-    cfg.merge_from_list(args.opts)
+    if args.cfg:
+        cfg.merge_from_file(args.cfg)
+    if args.opt:
+        cfg.merge_from_list(args.opts)
 
     cfg.freeze()
 
