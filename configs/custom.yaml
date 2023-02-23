@@ -29,7 +29,7 @@ model:
 # Data
 train_dataset:
   name: CustomDataset
-  txt_path: '/project/datasets/expressage/train.txt'
+  txt_path: '/project/datasets/custom/train.txt'
   num_classes: 2
   img_suffixes: ['.jpg']
   mask_suffixes: ['.png']
@@ -45,7 +45,7 @@ train_dataset:
 
 val_dataset:
   name: CustomDataset
-  txt_path: '/project/datasets/expressage/val.txt'
+  txt_path: '/project/datasets/custom/val.txt'
   num_classes: 2
   img_suffixes: ['.jpg']
   mask_suffixes: ['.png']
