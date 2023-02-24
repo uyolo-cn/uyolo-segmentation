@@ -95,7 +95,7 @@ def main():
     task = TrainingTask(cfg, evaluator)
 
     model_resume_path = (
-        os.path.join(cfg.save_dir.model, "model_last.ckpt")
+        os.path.join(cfg.save_dir.model, "weights/model_last.ckpt")
         if "resume" in cfg.schedule and cfg.schedule.resume
         else None
     )
