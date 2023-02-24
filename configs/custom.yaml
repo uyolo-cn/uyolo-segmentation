@@ -5,7 +5,9 @@ device:
   batchsize_per_gpu: 32
   precision: 16
 
-save_dir: /project/exp
+save_dir:
+  model: /project/exp
+  log: /project/exp
 
 # Model
 model:

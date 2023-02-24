@@ -52,7 +52,7 @@ def parse_args():
 def main():
     args = parse_args()
 
-    logger = UYOLOLightningLogger(cfg.save_dir)
+    logger = UYOLOLightningLogger(cfg.save_dir.log)
     logger.dump_cfg(cfg)
 
     import_all_modules_for_register()
@@ -121,7 +121,7 @@ def main():
         set_multi_processing(distributed=True)
 
     trainer = pl.Trainer(
-        default_root_dir=cfg.save_dir,
+        default_root_dir=cfg.save_dir.model,
         max_epochs=cfg.schedule.total_epochs,
         check_val_every_n_epoch=cfg.schedule.val_intervals,
         accelerator=accelerator,

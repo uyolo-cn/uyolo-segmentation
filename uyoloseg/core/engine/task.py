@@ -93,7 +93,7 @@ class TrainingTask(LightningModule):
 
 
     def training_epoch_end(self, outputs: List[Any]) -> None:
-        self.trainer.save_checkpoint(os.path.join(self.cfg.save_dir, 'weights', "model_last.ckpt"))
+        self.trainer.save_checkpoint(os.path.join(self.cfg.save_dir.model, 'weights', "model_last.ckpt"))
 
     def validation_step(self, batch, batch_idx):
         if self.weight_averager is not None:
@@ -137,10 +137,10 @@ class TrainingTask(LightningModule):
             if metric > self.best_metric:
                 self.best_metric = metric
                 self.trainer.save_checkpoint(
-                    os.path.join(self.cfg.save_dir, 'weights', "model_best.ckpt")
+                    os.path.join(self.cfg.save_dir.model, 'weights', "model_best.ckpt")
                 )
                 self.save_model_state(
-                    os.path.join(self.cfg.save_dir, 'weights', "model_best_avg.pth")
+                    os.path.join(self.cfg.save_dir.model, 'weights', "model_best_avg.pth")
                 )
 
         self.logger.log_metrics(all_result, self.current_epoch + 1)
