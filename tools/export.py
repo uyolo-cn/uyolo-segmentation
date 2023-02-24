@@ -59,7 +59,7 @@ def parse_args():
 def main():
     args = parse_args()
 
-    logger = UYOLOLightningLogger(cfg.save_dir)
+    logger = UYOLOLightningLogger(cfg.save_dir.log)
 
     import_all_modules_for_register()
 

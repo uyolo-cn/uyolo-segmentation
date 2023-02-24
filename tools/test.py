@@ -49,7 +49,7 @@ def parse_args():
 def main():
     args = parse_args()
 
-    logger = UYOLOLightningLogger(cfg.save_dir)
+    logger = UYOLOLightningLogger(cfg.save_dir.log)
 
     import_all_modules_for_register()
 
@@ -89,7 +89,7 @@ def main():
         accelerator, devices = "gpu", cfg.device.gpus
 
     trainer = pl.Trainer(
-        default_root_dir=cfg.save_dir,
+        default_root_dir=cfg.save_dir.model,
         accelerator=accelerator,
         devices=devices,
         log_every_n_steps=cfg.log.interval,
