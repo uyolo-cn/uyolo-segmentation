@@ -277,7 +277,7 @@ class DualResNet(nn.Module):
 
         logit_list = [x_]
 
-        if self.training and self.augment: 
+        if self.training or self.augment: 
             x_extra = self.seghead_extra(temp)
             logit_list = [x_extra, x_]
 
