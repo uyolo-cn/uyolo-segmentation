@@ -25,6 +25,7 @@
 
 import torch
 import torch.nn as nn
+from torch import Tensor
 import copy
 
 from uyoloseg.utils.register import registers
@@ -55,8 +56,13 @@ class SegModel(nn.Module):
 
         self.loss_func = build_loss(cfg.loss)
 
-    def forward(self, x):
-        return self.model(x)
+    def forward(self, batch):
+        if isinstance(batch, dict):
+            return self.model(batch['img'])
+        elif isinstance(batch, Tensor):
+            return self.model(batch)
+        else:
+            raise ValueError("Input must be dict or Tensor!!!")
 
     def forward_train(self, batch):
         logit = self.model(batch['img'])
