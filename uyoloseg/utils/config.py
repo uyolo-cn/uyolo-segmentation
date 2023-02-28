@@ -27,10 +27,12 @@ from yacs.config import CfgNode
 
 cfg = CfgNode(new_allowed=True)
 
+# device
 cfg.device = CfgNode(new_allowed=True)
 cfg.device.precision = 32
 
-cfg.save_dir = "./"
+# save dir
+cfg.save_dir = CfgNode(new_allowed=True)
 
 # Model
 cfg.model = CfgNode(new_allowed=True)
