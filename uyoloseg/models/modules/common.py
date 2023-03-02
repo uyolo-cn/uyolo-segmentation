@@ -50,12 +50,15 @@ class ConvBN(nn.Module):
     def forward_fuse(self, x):
         return self.act(self.conv(x))
     
-class BNConv(ConvBN):
+class BNConv(nn.Module):
+    # Standard convolution with args(ch_in, ch_out, kernel, stride, padding, groups, dilation, activation)
+    default_act = nn.ReLU(inplace=True)  # default activation
+    
     def __init__(self, c1, c2, k=1, s=1, p=None, g=1, d=1, act=True, bias=False) -> None:
-        super().__init__(c1, c2, k, s, p, g, d, act, bias)
+        super().__init__()
         self.bn = nn.BatchNorm2d(c1)
-        self.act = super().act
-        self.conv = super().conv
+        self.act = self.default_act if act is True else act if isinstance(act, nn.Module) else nn.Identity()
+        self.conv = nn.Conv2d(c1, c2, k, s, autopad(k, p, d), groups=g, dilation=d, bias=bias)
 
     def forward(self, x):
         return self.conv(self.act(self.bn(x)))
