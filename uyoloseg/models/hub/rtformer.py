@@ -176,7 +176,7 @@ class EABlock(nn.Module):
             self.cross_kv = nn.Sequential(
                 nn.BatchNorm2d(c2_l),
                 nn.AdaptiveMaxPool2d((self.cross_size,self.cross_size)),
-                nn.Conv2d(c2_l, 2 * c2_h, 1)
+                nn.Conv2d(c2_l, 2 * c2_h, 1, bias=False)
             )
 
         # injection
