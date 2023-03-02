@@ -27,7 +27,7 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 
-from uyoloseg.models.modules import ConvBN
+from uyoloseg.models.modules import ConvBN, BNConv
 from uyoloseg.utils.register import registers
 
 class BasicBlock(nn.Module):
@@ -277,7 +277,7 @@ class DualResNet(nn.Module):
 
         logit_list = [x_]
 
-        if self.training or self.augment: 
+        if self.augment: 
             x_extra = self.seghead_extra(temp)
             logit_list = [x_extra, x_]
 
@@ -296,7 +296,7 @@ def DDRNet23_slim(**kargs):
 
         
 if __name__ == '__main__':
-    model = DualResNet()
+    model = DualResNet(planes=32, head_planes=64, augment=True)
     x = torch.zeros(2, 3, 224, 224)
     outs = model(x)
     for y in outs:
