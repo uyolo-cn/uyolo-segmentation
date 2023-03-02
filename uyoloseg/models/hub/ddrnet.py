@@ -134,8 +134,8 @@ class DAPPM(nn.Module):
 class SegmentHead(nn.Module):
     def __init__(self, inplanes, interplanes, outplanes, scale_factor=None):
         super().__init__()
-        self.conv1 = ConvBN(inplanes, interplanes, 3)
-        self.conv2 = ConvBN(interplanes, outplanes, 1, bias=True)
+        self.conv1 = BNConv(inplanes, interplanes, 3)
+        self.conv2 = BNConv(interplanes, outplanes, 1, bias=True)
         self.scale_factor = scale_factor
 
     def forward(self, x):
