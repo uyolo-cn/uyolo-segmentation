@@ -242,7 +242,7 @@ class RTFormer(nn.Module):
         self.layer3 = self._make_layer(BasicBlock, planes * 2, planes * 4, layers[2], stride=2)
         self.layer3_ = self._make_layer(BasicBlock, planes * 2, planes * 2, 1)
 
-        self.compression3 = ConvBN(planes * 4, planes * 2, 1)
+        self.compression3 = BNConv(planes * 4, planes * 2, 1)
 
         self.layer4 = EABlock(
             c1s=[planes * 2, planes * 4],
