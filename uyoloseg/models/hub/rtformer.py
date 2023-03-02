@@ -145,10 +145,7 @@ class EABlock(nn.Module):
 
         # low resolution
         if self.proj_flag:
-            self.attn_shortcut_l = nn.Sequential(
-                nn.BatchNorm2d(c1_l),
-                nn.Conv2d(c1_l, c2_l, 1, 2)
-            )
+            self.attn_shortcut_l = BNConv(c1_l, c2_l, 1, 2, act=False)
         
         self.attn_l = ExternalAttention(
             c1_l,
