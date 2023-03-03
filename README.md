@@ -1,6 +1,8 @@
 # <div align="center">uyolo-segmentation</div>
 
-<a href="https://colab.research.google.com/github/uyolo-cn/uyolo-segmentation/blob/main/docs/demo/tutorial.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"></a>
+<a href="https://colab.research.google.com/github/uyolo-cn/uyolo-segmentation/blob/main/demo/tutorials/demo-inference-with-pytorch.ipynb">
+    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab">
+</a>
 
 # <img src="./docs/assets/introduction_ico.png" width="30"/> Introduction
 
