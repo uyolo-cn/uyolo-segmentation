@@ -39,6 +39,8 @@ train_dataset:
   transforms:
     - op: RandomResizedCrop
       size: [576, 1024]
+    - op: SimpleCopyPaste
+      label_index: [1]
     - op: RandomAutocontrast
     - op: RandomHorizontalFlip
     - op: Normalize

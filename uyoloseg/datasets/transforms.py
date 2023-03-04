@@ -300,6 +300,7 @@ class SimpleCopyPaste:
                     img[:, int(px1):int(px1 + H / 4.0), int(py1):int(py1 + W / 4.0)] += copy_img
                     mask[:, int(px1):int(px1 + H / 4.0), int(py1):int(py1 + W / 4.0)] *= (~valid)
                     mask[:, int(px1):int(px1 + H / 4.0), int(py1):int(py1 + W / 4.0)] += copy_mask
+                    valid = (mask == idx)
         return img, mask
 
 
