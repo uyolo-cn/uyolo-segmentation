@@ -196,7 +196,7 @@ class EABlock(nn.Module):
         # compression
         x_h_shape = x_h.shape[2:]
         x_l_cp = self.compression(x_l)
-        x_h += F.interpolate(x_l_cp, size=x_h_shape, mode='bilinear')
+        x_h = x_h + F.interpolate(x_l_cp, size=x_h_shape, mode='bilinear')
 
         # high resolution
         if not self.use_cross_kv:
@@ -232,7 +232,7 @@ class RTFormer(nn.Module):
             ConvBN(planes, planes, 3, 2, bias=True)
         )
 
-        self.relu = nn.ReLU(inplace=False)
+        self.relu = nn.ReLU()
 
         self.layer1 = self._make_layer(BasicBlock, planes, planes, layers[0])
         self.layer2 = self._make_layer(BasicBlock, planes, planes * 2, layers[1], stride=2)
@@ -293,6 +293,7 @@ class RTFormer(nn.Module):
 
         x4_, x4 = self.layer4(
             [self.relu(x3_), self.relu(x3)])  # 2c, 1/8; 8c, 1/16
+        
         x5_, x5 = self.layer5(
             [self.relu(x4_), self.relu(x4)])  # 2c, 1/8; 8c, 1/32
 
@@ -300,11 +301,13 @@ class RTFormer(nn.Module):
         x6 = F.interpolate(
             x6, size=x5_.shape[2:], mode='bilinear')  # 2c, 1/8
         x_out = self.seghead(torch.concat([x5_, x6], dim=1))  # 4c, 1/8
-        logit_list = [x_out]
+        logit_list = []
 
-        if self.training and self.augment:
+        if self.augment:
             x_out_extra = self.seghead_extra(x3_)
             logit_list.append(x_out_extra)
+        
+        logit_list.append(x_out)
 
         logit_list = [
             F.interpolate(

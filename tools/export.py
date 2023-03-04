@@ -39,7 +39,7 @@ python tools/export.py --model /project/custom/weights/model_best_avg.pth --out_
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--cfg", default='configs/custom.yaml', type=str, help="train config file path")
+    parser.add_argument("--cfg", default='configs/ddrnet.yaml', type=str, help="train config file path")
     parser.add_argument("--model", type=str, help="model file(.pth) path")
     parser.add_argument("--include", type=str, default='onnx', nargs='*', help="onnx | openvino | etc.")
     parser.add_argument(

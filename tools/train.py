@@ -36,7 +36,7 @@ from uyoloseg.core import build_evaluator, TrainingTask
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--cfg", default='configs/custom.yaml', type=str, help="train config file path")
+    parser.add_argument("--cfg", default='configs/ddrnet.yaml', type=str, help="train config file path")
     parser.add_argument(
         "--local_rank", default=-1, type=int, help="node rank for distributed training"
     )
@@ -133,7 +133,7 @@ def main():
         benchmark=cfg.get("cudnn_benchmark", True),
         gradient_clip_val=cfg.get("grad_clip", 0.0),
         strategy=strategy,
-        precision=precision,
+        precision=precision
     )
 
     trainer.fit(task, train_dataloader, val_dataloader, ckpt_path=model_resume_path)

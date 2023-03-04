@@ -35,7 +35,7 @@ from uyoloseg.core import build_evaluator, TrainingTask
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--cfg", default='configs/custom.yaml', type=str, help="train config file path")
+    parser.add_argument("--cfg", default='configs/ddrnet.yaml', type=str, help="train config file path")
     parser.add_argument("--model", type=str, help="ckeckpoint file(.ckpt) path")
     parser.add_argument("--seed", type=int, default=304, help="random seed")
     parser.add_argument('opts',
