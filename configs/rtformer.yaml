@@ -18,11 +18,15 @@ model:
     pretrained: /project/model_hub/RTFormer/rtformer_slim_imagenet.pth
   loss:
     name: ComposeLoss
-    losses: 
+    losses:
       - name: CrossEntropyLoss
         ignore_label: 255
-    coef: [0.4, 1.0]
-    indexes: [[0, 0, 0], [0, 1, 0]]
+      - name: OhemCrossEntropyLoss
+        ignore_label: 255
+        thresh: 0.9
+        min_kept: 131072
+    coef: [1.0, 0.4]
+    indexes: [[0, 0, 0], [1, 1, 0]]
 
 # Data
 train_dataset:

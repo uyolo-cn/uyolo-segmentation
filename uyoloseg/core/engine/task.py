@@ -143,7 +143,11 @@ class TrainingTask(LightningModule):
                     os.path.join(self.cfg.save_dir.model, 'weights', "model_best_avg.pth")
                 )
 
+            self.logger.info(f'Best {metric_key}: {self.best_metric}')
+
         self.logger.log_metrics(all_result, self.current_epoch + 1)
+
+        
 
     def test_step(self, batch, batch_idx):
         preds = self(batch)

@@ -37,24 +37,24 @@ class DiceLoss(nn.Module):
     The implements of the dice loss.
     Args:
         weight (list[float], optional): The weight for each class. Default: None.
-        ignore_index (int64): ignore_index (int64, optional): Specifies a target value that
+        ignore_label (int64): ignore_label (int64, optional): Specifies a target value that
             is ignored and does not contribute to the input gradient. Default ``255``.
         smooth (float32): Laplace smoothing to smooth dice loss and accelerate convergence.
             Default: 1.0
     '''
-    def __init__(self, weight: Tensor = None, ignore_index: int = 255, smooth: float = 1.0) -> None:
+    def __init__(self, weight: Tensor = None, ignore_label: int = 255, smooth: float = 1.0) -> None:
         super().__init__()
         self.weight = weight
-        self.ignore_index = ignore_index
+        self.ignore_label = ignore_label
         self.smooth = smooth
         self.eps = 1e-8
 
     def forward(self, logit: Tensor, label: Tensor):
         num_classes =  logit.shape[1]
 
-        mask = (label != self.ignore_index)
+        mask = (label != self.ignore_label)
 
-        labels_one_hot: Tensor = F.one_hot(label * mask, num_classes).permute((0, 3, 1, 2))
+        labels_one_hot: Tensor = F.one_hot(label.long() * mask, num_classes).permute((0, 3, 1, 2))
 
         prob = F.softmax(logit, dim=1) * mask.unsqueeze(dim=1)
 
@@ -78,7 +78,7 @@ if __name__ == '__main__':
 
     print(input.dtype)
 
-    target = torch.empty(8, 10, 10, dtype=torch.long).random_(5)
+    target = torch.empty(8, 10, 10, dtype=torch.float).random_(5)
 
     print(target.dtype)
 
