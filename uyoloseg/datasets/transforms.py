@@ -256,7 +256,7 @@ class Resize:
         return self.img_resize(img), self.mask_resize(mask)
 
 class RandomResizedCrop:
-    def __init__(self, size: Union[int, Tuple[int], List[int]], scale: Tuple[float] = (0.5, 1.0), ratio: Tuple[float] = (0.75, 4.0 / 3.0)) -> None:
+    def __init__(self, size: Union[int, Tuple[int], List[int]], scale: Tuple[float] = (0.08, 1.0), ratio: Tuple[float] = (0.75, 4.0 / 3.0)) -> None:
         """
         Crop a random portion of image and resize it to a given size.
         If the image is torch Tensor, it is expected to have `[..., H, W]` shape, where `...` means an arbitrary number of leading dimensions
