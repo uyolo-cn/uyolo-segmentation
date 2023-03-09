@@ -26,6 +26,8 @@
 import argparse
 
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
 import pytorch_lightning as pl
 import onnx
 import onnxsim
@@ -80,12 +82,12 @@ class SegInterpolate(torch.autograd.Function):
 
 class onnxNet(nn.Module):
     def __init__(self, model):
-        super(onnx_net, self).__init__()
+        super().__init__()
         self.backone = model
 
     def forward(self, x, size):
-        x1 = self.backone(x)
-        # y = F.interpolate(x1, size=(self.inter_size[1], self.inter_size[0]), mode='bilinear', align_corners=False)
+        y = self.backone(x)[-1]
+        # y = F.interpolate(y, size=(self.inter_size[1], self.inter_size[0]), mode='bilinear', align_corners=False)
         # y = F.softmax(y, dim=1)
         y = torch.argmax(y, dim=1, keepdim=True).float()
         y = SegInterpolate.apply(y, size).int()
