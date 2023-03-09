@@ -113,7 +113,7 @@ def main():
         torch.randn(1, 3, args.input_shape[0], args.input_shape[1])
     ).to(device)
     
-    size_input = torch.tensor([1, 1, 1080, 1920], dtype=torch.int64)
+    size_input = torch.tensor([1, 1, 1080, 1920], dtype=torch.int64).to(device)
 
     if 'onnx' in args.include:
         torch.onnx.export(
@@ -131,7 +131,9 @@ def main():
         logger.log("Finished exporting onnx ")
 
         logger.log("Start simplifying onnx ")
-        input_data = {"data": dummy_input.detach().cpu().numpy()}
+        input_data = {"input_image": dummy_input.detach().cpu().numpy()}
+        if args.add_resize:
+            input_data.update(input_size=size_input.detach().cpu().numpy())
         model_sim, flag = onnxsim.simplify(args.out_path, input_data=input_data)
         if flag:
             onnx.save(model_sim, args.out_path)
