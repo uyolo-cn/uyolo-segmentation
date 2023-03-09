@@ -80,7 +80,7 @@ class SegInterpolate(torch.autograd.Function):
         size = size.tolist() 
         return F.interpolate(input, size=tuple(size[-2:]), mode='nearest')
 
-class onnxNet(nn.Module):
+class OnnxNet(nn.Module):
     def __init__(self, model):
         super().__init__()
         self.backone = model
@@ -108,7 +108,7 @@ def main():
     pth = torch.load(args.model, map_location=lambda storage, loc: storage)
     model.load_state_dict(pth["state_dict"])
     if args.add_resize:
-        model = onnxNet(model)
+        model = OnnxNet(model)
     model.to(device).eval()
 
     dummy_input = torch.autograd.Variable(
