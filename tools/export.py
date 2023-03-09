@@ -41,7 +41,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--cfg", default='configs/ddrnet.yaml', type=str, help="train config file path")
     parser.add_argument("--model", type=str, help="model file(.pth) path")
-    parser.add_argument("--add-resize", action=store_true, help="add resize op as model final layer")
+    parser.add_argument("--add-resize", action='store_true', help="add resize op as model final layer")
     parser.add_argument("--include", type=str, default='onnx', nargs='*', help="onnx | openvino | etc.")
     parser.add_argument(
         "--out_path", type=str, default="ddrnet23_slim.onnx", help="Onnx model output path."
