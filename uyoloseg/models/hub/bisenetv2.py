@@ -180,8 +180,6 @@ class BGA(nn.Module):
     def __init__(self, out_dim, align_corners=False):
         super().__init__()
 
-        self.align_corners = align_corners
-
         self.db_branch_keep = nn.Sequential(
             DwConvBN(out_dim, out_dim, 3),
             nn.Conv2d(out_dim, out_dim, 1))
@@ -197,6 +195,11 @@ class BGA(nn.Module):
 
         self.sb_branch_up = ConvBN(out_dim, out_dim, 3, act=False)
 
+        # self.up1 = nn.Upsample(scale_factor=4, mode='bilinear', align_corners=align_corners)
+        # self.up2 = nn.Upsample(scale_factor=4, mode='bilinear', align_corners=align_corners)
+        self.up1 = UpSample(out_dim, factor=4)
+        self.up2 = UpSample(out_dim, factor=4)
+
         self.conv = ConvBN(out_dim, out_dim, 3, act=False)
 
     def forward(self, dfm, sfm):
@@ -205,23 +208,10 @@ class BGA(nn.Module):
         sb_feat_keep = self.sb_branch_keep(sfm)
         sb_feat_up = self.sb_branch_up(sfm)
 
-        # UpSample ???
-        sb_feat_up = F.interpolate(
-            sb_feat_up,
-            db_feat_keep.shape[2:],
-            mode='bilinear',
-            align_corners=self.align_corners)
-        sb_feat_up = torch.sigmoid(sb_feat_up)
-
+        sb_feat_up = torch.sigmoid(self.up1(sb_feat_up))
         db_feat = db_feat_keep * sb_feat_up
-        sb_feat = db_feat_down * sb_feat_keep
 
-        # UpSample ???
-        sb_feat = F.interpolate(
-            sb_feat,
-            db_feat.shape[2:],
-            mode='bilinear',
-            align_corners=self.align_corners)
+        sb_feat = self.up2(db_feat_down * sb_feat_keep)
 
         return self.conv(db_feat + sb_feat)
 
