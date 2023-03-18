@@ -247,7 +247,7 @@ class SegmentHead(nn.Module):
     
 class BiSeNetV2(nn.Module):
     """
-    The BiSeNet V2 implementation based on PaddlePaddle.
+    The BiSeNet V2 implementation based on uyoloseg.
     The original article refers to
     Yu, Changqian, et al. "BiSeNet V2: Bilateral Network with Guided Aggregation for Real-time Semantic Segmentation"
     (https://arxiv.org/abs/2004.02147)
@@ -303,7 +303,7 @@ class BiSeNetV2(nn.Module):
             logit2 = self.aux_head2(feat2)
             logit3 = self.aux_head3(feat3)
             logit4 = self.aux_head4(feat4)
-            logit_list = [logit, logit1, logit2, logit3, logit4]
+            logit_list = [logit1, logit2, logit3, logit4, logit]
 
         logit_list = [
             F.interpolate(
