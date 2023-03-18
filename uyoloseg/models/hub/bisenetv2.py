@@ -28,7 +28,7 @@ import torch.nn as nn
 from torch.nn import functional as F
 
 from uyoloseg.models.modules import ConvBN, DwConvBN
-# from uyoloseg.utils.register import registers
+from uyoloseg.utils.register import registers
 
 # This module or resize op?
 class UpSample(nn.Module):
@@ -203,19 +203,19 @@ class BGA(nn.Module):
         db_feat_keep = self.db_branch_keep(dfm)
         db_feat_down = self.db_branch_down(dfm)
         sb_feat_keep = self.sb_branch_keep(sfm)
-
         sb_feat_up = self.sb_branch_up(sfm)
+
         # UpSample ???
         sb_feat_up = F.interpolate(
             sb_feat_up,
             db_feat_keep.shape[2:],
             mode='bilinear',
             align_corners=self.align_corners)
-
         sb_feat_up = torch.sigmoid(sb_feat_up)
-        db_feat = db_feat_keep * sb_feat_up
 
+        db_feat = db_feat_keep * sb_feat_up
         sb_feat = db_feat_down * sb_feat_keep
+
         # UpSample ???
         sb_feat = F.interpolate(
             sb_feat,
@@ -226,23 +226,16 @@ class BGA(nn.Module):
         return self.conv(db_feat + sb_feat)
 
 class SegmentHead(nn.Module):
-    def __init__(self, inplanes, interplanes, outplanes, scale_factor=None):
+    def __init__(self, inplanes, interplanes, outplanes):
         super().__init__()
         self.conv = nn.Sequential(
             ConvBN(inplanes, interplanes, 3),
             nn.Dropout(0.1),
             nn.Conv2d(interplanes, outplanes, 1)
         )
-        self.scale_factor = scale_factor
 
     def forward(self, x):
         out = self.conv(x)
-
-        if self.scale_factor is not None:
-            height = x.shape[-2] * self.scale_factor
-            width = x.shape[-1] * self.scale_factor
-            out = F.interpolate(out, size=[height, width], mode='bilinear', align_corners=False)
-
         return out
     
 class BiSeNetV2(nn.Module):
@@ -252,16 +245,17 @@ class BiSeNetV2(nn.Module):
     Yu, Changqian, et al. "BiSeNet V2: Bilateral Network with Guided Aggregation for Real-time Semantic Segmentation"
     (https://arxiv.org/abs/2004.02147)
     Args:
-        num_classes (int): The unique number of target classes.
+        output_dim (int): The unique number of target classes.
         lambd (float, optional): A factor for controlling the size of semantic branch channels. Default: 0.25.
         in_channels (int, optional): The channels of input image. Default: 3.
     """
 
     def __init__(self,
-                 num_classes=19,
+                 output_dim=19,
                  in_channels=3,
                  lambd=0.25,
-                 align_corners=False):
+                 align_corners=False,
+                 augment=True):
         super().__init__()
 
         c1, c2, c3 = 64, 64, 128
@@ -274,13 +268,14 @@ class BiSeNetV2(nn.Module):
         self.sb = SemanticBranch(in_channels, sb_channels)
 
         self.bga = BGA(mid_channels, align_corners)
-        self.aux_head1 = SegmentHead(c1, c1, num_classes)
-        self.aux_head2 = SegmentHead(c3, c3, num_classes)
-        self.aux_head3 = SegmentHead(c4, c4, num_classes)
-        self.aux_head4 = SegmentHead(c5, c5, num_classes)
-        self.head = SegmentHead(mid_channels, mid_channels, num_classes)
+        self.aux_head1 = SegmentHead(c1, c1, output_dim)
+        self.aux_head2 = SegmentHead(c3, c3, output_dim)
+        self.aux_head3 = SegmentHead(c4, c4, output_dim)
+        self.aux_head4 = SegmentHead(c5, c5, output_dim)
+        self.head = SegmentHead(mid_channels, mid_channels, output_dim)
 
         self.align_corners = align_corners
+        self.augment = augment
 
         self.apply(self._init_weights)
 
@@ -296,7 +291,7 @@ class BiSeNetV2(nn.Module):
         feat1, feat2, feat3, feat4, sfm = self.sb(x)
         logit = self.head(self.bga(dfm, sfm))
 
-        if not self.training:
+        if not self.augment:
             logit_list = [logit]
         else:
             logit1 = self.aux_head1(feat1)
@@ -314,7 +309,11 @@ class BiSeNetV2(nn.Module):
         ]
 
         return logit_list
-    
+
+@registers.model_hub.register
+def BiSeNet_v2(**kargs):
+    return BiSeNetV2(**kargs)
+
 if __name__ == '__main__':
     model = BiSeNetV2()
     x = torch.zeros(2, 3, 224, 224)

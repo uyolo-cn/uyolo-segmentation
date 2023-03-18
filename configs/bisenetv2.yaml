@@ -1,0 +1,91 @@
+# Device
+device:
+  gpus: (0,)
+  workers_per_gpu: 8
+  batchsize_per_gpu: 32
+  precision: 16
+
+save_dir:
+  model: /project/exp
+  log: /project/exp
+
+# Model
+model:
+  network:
+    name: BiSeNet_v2
+    output_dim: 2
+    augment: True
+  loss:
+    name: ComposeLoss
+    losses: 
+      - name: OhemCrossEntropyLoss
+        ignore_label: 255
+        thresh: 0.9
+        min_kept: 131072
+    coef: [1.0, 1.0, 1.0, 1.0, 1.0]
+    indexes: [[0, 0, 0], [0, 1, 0], [0, 2, 0], [0, 3, 0], [0, 4, 0]]
+
+# Data
+train_dataset:
+  name: CustomDataset
+  txt_path: '/project/datasets/custom/train.txt'
+  num_classes: 2
+  img_suffixes: ['.jpg']
+  mask_suffixes: ['.png']
+  ignore_index: 255
+  transforms:
+    - op: RandomResizedCrop
+      size: [576, 1024]
+      scale: [0.5, 1]
+    - op: ColorJitter
+    - op: RandomHorizontalFlip
+    - op: Normalize
+      mean: [0.485, 0.456, 0.406]
+      std: [0.229, 0.224, 0.225]
+
+val_dataset:
+  name: CustomDataset
+  txt_path: '/project/datasets/custom/val.txt'
+  num_classes: 2
+  img_suffixes: ['.jpg']
+  mask_suffixes: ['.png']
+  ignore_index: 255
+  transforms:
+    - op: Resize
+      size: [576, 1024]
+    - op: Normalize
+      mean: [0.485, 0.456, 0.406]
+      std: [0.229, 0.224, 0.225]
+
+# Schedule
+schedule:
+  optimizer:
+    # name: AdamW
+    # lr: 0.01
+    # weight_decay: 0.0005
+    name: SGD
+    lr: 0.01
+    weight_decay: 0.0005
+    momentum: 0.9
+  warmup:
+    name: linear
+    steps: 300
+    ratio: 0.001
+  lr_schedule:
+    name: CosineAnnealingLR
+    T_max: 300
+    eta_min: 0.0005
+  resume: False
+  total_epochs: 100
+  val_intervals: 1
+
+evaluator:
+  name: ComposeEvaluator
+  evals:
+    - name: SegmentEvaluator
+      metric_key: miou
+  indexes: [[0, -1, 0]]
+  metric_index: -1
+
+log:
+  interval: 10

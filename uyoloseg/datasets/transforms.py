@@ -40,7 +40,7 @@ class Normalize:
         return trans.normalize(img.float(), self.mean, self.std, inplace=True), mask
 
 class ColorJitter(transforms.ColorJitter):
-    def __init__(self, brightness=0, contrast=0, saturation=0, hue=0) -> None:
+    def __init__(self, brightness=0.5, contrast=0.5, saturation=0.5, hue=0.5) -> None:
         super().__init__(brightness, contrast, saturation, hue)
     
     def __call__(self, img: Tensor, mask: Tensor) -> Tuple[Tensor, Tensor]:
