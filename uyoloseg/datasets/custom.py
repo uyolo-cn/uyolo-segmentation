@@ -26,6 +26,8 @@ import torch
 from torch import Tensor
 from torch.utils.data import Dataset
 from torchvision import io
+import torchvision.transforms as transforms
+from PIL import Image
 from typing import Tuple
 from .utils import file2list
 
@@ -65,8 +67,17 @@ class CustomDataset(Dataset):
 
 
     def __getitem__(self, index) -> Tuple[Tensor, Tensor]:
-        image = io.read_image(self.files[index][0].strip())
-        label = io.read_image(self.files[index][1].strip())
+        try:
+            image = io.read_image(self.files[index][0].strip())
+        except RuntimeError as e:
+            image = Image.open(self.files[index][0].strip())
+            image = transforms.ToTensor()(image)
+        
+        try:
+            label = io.read_image(self.files[index][1].strip())
+        except RuntimeError as e:
+            label = Image.open(self.files[index][1].strip())
+            label = transforms.ToTensor()(label)
 
         assert label.shape[0] == 1, "The number of mask's channel must be 1!!!"
     
