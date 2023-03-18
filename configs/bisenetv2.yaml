@@ -18,12 +18,14 @@ model:
   loss:
     name: ComposeLoss
     losses: 
+      - name: CrossEntropyLoss
+        ignore_label: 255
       - name: OhemCrossEntropyLoss
         ignore_label: 255
         thresh: 0.9
         min_kept: 131072
-    coef: [1.0, 1.0, 1.0, 1.0, 1.0]
-    indexes: [[0, 0, 0], [0, 1, 0], [0, 2, 0], [0, 3, 0], [0, 4, 0]]
+    coef: [1.0, 1.0, 1.0, 1.0, 0.4]
+    indexes: [[0, 0, 0], [0, 1, 0], [0, 2, 0], [0, 3, 0], [1, 4, 0]]
 
 # Data
 train_dataset:
@@ -73,7 +75,7 @@ schedule:
     ratio: 0.001
   lr_schedule:
     name: CosineAnnealingLR
-    T_max: 300
+    T_max: 100
     eta_min: 0.0005
   resume: False
   total_epochs: 100
