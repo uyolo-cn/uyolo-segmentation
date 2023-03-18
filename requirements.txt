@@ -12,5 +12,6 @@ termcolor
 torch>=1.13
 torchmetrics
 torchvision
+Pillow
 tqdm
 yacs
