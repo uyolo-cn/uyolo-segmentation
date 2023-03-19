@@ -63,8 +63,19 @@ def main():
     torch.set_float32_matmul_precision('medium')
     device = torch.device('cpu' if cfg.device.gpus == -1 else 'cuda')
 
+    model_resume_path = os.path.join(cfg.save_dir.model, "weights/model_last.ckpt")
+    model_resume_path = (
+        model_resume_path
+        if "resume" in cfg.schedule and cfg.schedule.resume and os.path.exists(model_resume_path)
+        else None
+    )
+
     if args.seed is not None:
-        pl.seed_everything(args.seed)
+        if model_resume_path is None:
+            pl.seed_everything(args.seed)
+        else:
+            import time
+            pl.seed_everything(int(time.time()))
 
     logger.info("Setting up data...")
     train_dataset = build_dataset(cfg.train_dataset, "train", logger)
@@ -94,12 +105,6 @@ def main():
     logger.info("Creating model...")
     task = TrainingTask(cfg, evaluator)
 
-    model_resume_path = (
-        os.path.join(cfg.save_dir.model, "weights/model_last.ckpt")
-        if "resume" in cfg.schedule and cfg.schedule.resume
-        else None
-    )
-
     if cfg.device.gpus == -1:
         logger.info("Using CPU training")
         accelerator, devices, strategy, precision = (
@@ -121,6 +126,7 @@ def main():
         set_multi_processing(distributed=True)
 
     trainer = pl.Trainer(
+        enable_checkpointing=False,
         default_root_dir=cfg.save_dir.model,
         max_epochs=cfg.schedule.total_epochs,
         check_val_every_n_epoch=cfg.schedule.val_intervals,

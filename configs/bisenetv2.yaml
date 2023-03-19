@@ -18,14 +18,12 @@ model:
   loss:
     name: ComposeLoss
     losses: 
-      - name: CrossEntropyLoss
-        ignore_label: 255
       - name: OhemCrossEntropyLoss
         ignore_label: 255
         thresh: 0.9
         min_kept: 131072
-    coef: [1.0, 1.0, 1.0, 1.0, 0.4]
-    indexes: [[0, 0, 0], [0, 1, 0], [0, 2, 0], [0, 3, 0], [1, 4, 0]]
+    coef: [1.0, 1.0, 1.0, 1.0, 1.0]
+    indexes: [[0, 0, 0], [0, 1, 0], [0, 2, 0], [0, 3, 0], [0, 4, 0]]
 
 # Data
 train_dataset:

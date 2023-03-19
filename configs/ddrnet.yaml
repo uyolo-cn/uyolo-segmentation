@@ -39,8 +39,7 @@ train_dataset:
   transforms:
     - op: RandomResizedCrop
       size: [576, 1024]
-    - op: SimpleCopyPaste
-      label_index: [1]
+    - op: ColorJitter
     - op: RandomAutocontrast
     - op: RandomHorizontalFlip
     - op: Normalize
@@ -77,21 +76,19 @@ schedule:
     ratio: 0.001
   lr_schedule:
     name: CosineAnnealingLR
-    T_max: 100
+    T_max: 300
     eta_min: 0.0005
-  resume: False
-  total_epochs: 100
-  val_intervals: 1
+  resume: true
+  total_epochs: 300
+  val_intervals: 10
 
 evaluator:
   name: ComposeEvaluator
   evals:
     - name: SegmentEvaluator
       metric_key: miou
-    - name: SegmentEvaluator
-      metric_key: miou
-  indexes: [[0, 0, 0], [1, 1, 0]]
-  metric_index: 1
+  indexes: [[0, -1, 0]]
+  metric_index: 0
 
 log:
   interval: 10
