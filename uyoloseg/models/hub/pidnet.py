@@ -291,12 +291,19 @@ class PIDNet(nn.Module):
 
         x_ = self.final_layer(self.dfm(x_, x, x_d))
 
+        logit_list = []
+
         if self.augment: 
             x_extra_p = self.seghead_p(temp_p)
             x_extra_d = self.seghead_d(temp_d)
-            return [x_extra_p, x_, x_extra_d]
+            logit_list = [x_extra_p, x_extra_d, x_]
         else:
-            return [x_]
+            logit_list = [x_]
+        
+        return [
+            F.interpolate(
+                logit, [height_output * 8, width_output * 8], mode='bilinear', align_corners=False) for logit in logit_list
+        ]
 
 @registers.model_hub.register
 def PIDNet_small(**kargs):
